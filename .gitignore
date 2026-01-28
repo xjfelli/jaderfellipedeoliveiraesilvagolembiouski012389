@@ -32,3 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 .claude/
+
+### Environment files ###
+.env
+.env.*
+!.env.example
