@@ -14,6 +14,22 @@ import { LoginFacade } from './login.facade';
 export class LoginComponent {
   constructor(public facade: LoginFacade) {}
 
+  get loginForm(): any {
+    return this.facade.loginForm;
+  }
+
+  isLoading(): boolean {
+    return this.facade.isLoading();
+  }
+
+  errorMessage(): string | null {
+    return this.facade.errorMessage();
+  }
+
+  showPassword(): boolean {
+    return this.facade.showPassword();
+  }
+
   onSubmit(): void {
     this.facade.login();
   }
