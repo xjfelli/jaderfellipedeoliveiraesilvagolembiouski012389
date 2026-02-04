@@ -7,6 +7,7 @@
     "build": "ng build",
     "dev": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:coverage": "ng test --coverage",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },
   "prettier": {
@@ -24,11 +25,11 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "dependencies": {
-    "@angular/common": "^21.1.0",
-    "@angular/compiler": "^21.1.0",
-    "@angular/core": "^21.1.0",
+    "@angular/common": "^21.1.2",
+    "@angular/compiler": "^21.1.2",
+    "@angular/core": "^21.1.2",
     "@angular/forms": "^21.1.0",
-    "@angular/platform-browser": "^21.1.0",
+    "@angular/platform-browser": "^21.1.2",
     "@angular/platform-server": "^21.1.0",
     "@angular/router": "^21.1.0",
     "@angular/ssr": "^21.1.1",
@@ -40,13 +41,24 @@
     "@angular/build": "^21.1.1",
     "@angular/cli": "^21.1.1",
     "@angular/compiler-cli": "^21.1.0",
+    "@angular/platform-browser-dynamic": "^21.1.2",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/express": "^5.0.1",
+    "@types/jasmine": "^6.0.0",
     "@types/node": "^20.17.19",
-    "jsdom": "^27.1.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "happy-dom": "^20.5.0",
+    "jasmine-core": "^6.0.1",
+    "karma": "^6.4.4",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-coverage": "^2.2.1",
+    "karma-jasmine": "^5.1.0",
+    "karma-jasmine-html-reporter": "^2.2.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.12",
     "typescript": "~5.9.2",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.18",
+    "zone.js": "^0.16.0"
   }
 }
