@@ -19,6 +19,14 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
+            "allowedCommonJsDependencies": [
+              "sockjs-client",
+              "eventsource",
+              "faye-websocket",
+              "inherits",
+              "debug",
+              "url-parse"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -27,12 +35,7 @@
             ],
             "styles": [
               "src/styles.css"
-            ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            ]
           },
           "configurations": {
             "production": {

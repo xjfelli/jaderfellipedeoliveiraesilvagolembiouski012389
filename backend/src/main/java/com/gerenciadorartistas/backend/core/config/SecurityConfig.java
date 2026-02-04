@@ -62,6 +62,9 @@ public class SecurityConfig {
                     // Públicos - Autenticação
                     .requestMatchers("/api/v1/auth/**")
                     .permitAll()
+                    // Públicos - WebSocket
+                    .requestMatchers("/ws/**")
+                    .permitAll()
                     // Públicos - Health checks
                     .requestMatchers("/api/health", "/api/info")
                     .permitAll()
