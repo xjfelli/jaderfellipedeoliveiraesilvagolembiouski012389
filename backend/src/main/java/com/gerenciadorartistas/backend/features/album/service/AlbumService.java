@@ -1,6 +1,7 @@
 package com.gerenciadorartistas.backend.features.album.service;
 
 import com.gerenciadorartistas.backend.features.album.dto.AlbumDTO;
+import com.gerenciadorartistas.backend.features.album.dto.AlbumNotificationDTO;
 import com.gerenciadorartistas.backend.features.album.dto.AlbumPresenterDTO;
 import com.gerenciadorartistas.backend.features.album.dto.AlbumPresenterDTO.ArtistSimplifiedPresenterDTO;
 import com.gerenciadorartistas.backend.features.album.entity.Album;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +35,9 @@ public class AlbumService {
 
     @Autowired
     private FileUploadService fileUploadService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     private AlbumPresenterDTO refreshUrls(AlbumPresenterDTO dto) {
         String refreshedCoverUrl =
@@ -142,6 +147,18 @@ public class AlbumService {
         album.setStorageId(storageId);
 
         album = albumRepository.save(album);
+        
+        // Enviar notificação WebSocket
+        AlbumNotificationDTO notification = new AlbumNotificationDTO(
+            "CREATE",
+            album.getId(),
+            album.getTitle(),
+            album.getReleaseYear(),
+            uploadResult.presignedUrl(),
+            album.getCreatedAt()
+        );
+        messagingTemplate.convertAndSend("/topic/albums", notification);
+        
         return refreshUrls(albumMapper.toPresenterDTO(album, false));
     }
 
@@ -153,13 +170,39 @@ public class AlbumService {
             );
 
         album = albumRepository.save(albumMapper.toEntity(albumDTO));
+        
+        // Enviar notificação WebSocket de atualização
+        AlbumNotificationDTO notification = new AlbumNotificationDTO(
+            "UPDATE",
+            album.getId(),
+            album.getTitle(),
+            album.getReleaseYear(),
+            album.getCoverUrl(),
+            album.getCreatedAt()
+        );
+        messagingTemplate.convertAndSend("/topic/albums", notification);
+        
         return refreshUrls(albumMapper.toPresenterDTO(album, false));
     }
 
     public void delete(Long id) {
-        if (!albumRepository.existsById(id)) {
-            throw new RuntimeException("Álbum não encontrado com id: " + id);
-        }
+        Album album = albumRepository
+            .findById(id)
+            .orElseThrow(() ->
+                new RuntimeException("Álbum não encontrado com id: " + id)
+            );
+        
+        // Enviar notificação WebSocket de exclusão
+        AlbumNotificationDTO notification = new AlbumNotificationDTO(
+            "DELETE",
+            album.getId(),
+            album.getTitle(),
+            album.getReleaseYear(),
+            album.getCoverUrl(),
+            album.getCreatedAt()
+        );
+        messagingTemplate.convertAndSend("/topic/albums", notification);
+        
         albumRepository.deleteById(id);
     }
 

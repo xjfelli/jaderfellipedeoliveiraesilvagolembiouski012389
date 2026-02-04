@@ -1,12 +1,16 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { AlbumsService } from './albums.service';
+import { WebSocketService } from '../../core/websocket.service';
 import type { Album } from './model/album.model';
 
 @Injectable()
 export class AlbumsFacade {
   private router = inject(Router);
   private albumsService = inject(AlbumsService);
+  private webSocketService = inject(WebSocketService);
+  private platformId = inject(PLATFORM_ID);
 
   albums = signal<Album[]>([]);
   loading = signal(false);
@@ -22,6 +26,19 @@ export class AlbumsFacade {
   pageSize = signal(10);
   totalPages = signal(0);
   totalElements = signal(0);
+
+  constructor() {
+    // Subscrever às notificações de novos álbuns apenas no browser
+    if (isPlatformBrowser(this.platformId)) {
+      this.webSocketService.getAlbumNotifications().subscribe(notification => {
+        if (notification) {
+          console.log(`📢 Álbum ${notification.action}: ${notification.title}`);
+          // Recarregar a lista de álbuns quando receber notificação
+          this.loadAlbums();
+        }
+      });
+    }
+  }
 
   isLoading(): boolean {
     return this.loading();

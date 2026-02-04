@@ -3,6 +3,7 @@ import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './core/auth/services/auth.service';
+import { WebSocketService } from './core/websocket.service';
 
 @Component({
   selector: 'app-root',
@@ -13,11 +14,15 @@ import { AuthService } from './core/auth/services/auth.service';
 export class App {
   authService = inject(AuthService);
   router = inject(Router);
+  private webSocketService = inject(WebSocketService); // Inicializa o WebSocket
 
   currentUser$ = this.authService.currentUser$;
   isLoginPage = false;
 
   constructor() {
+    console.log('🚀 App Component: Constructor chamado');
+    console.log('🚀 WebSocketService injetado:', this.webSocketService);
+    
     // Inicializa isLoginPage com a rota atual
     this.isLoginPage = this.router.url === '/login';
 
