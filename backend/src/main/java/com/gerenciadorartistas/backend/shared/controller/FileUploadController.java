@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/v1/api/files")
+@RequestMapping("/api/v1/files")
 @Tag(
     name = "Upload de Arquivos",
     description = "Endpoints para gerenciamento de arquivos e imagens"
