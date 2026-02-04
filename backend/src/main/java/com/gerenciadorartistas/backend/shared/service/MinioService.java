@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,7 +22,12 @@ public class MinioService {
     );
 
     @Autowired
+    @Qualifier("internalMinioClient")
     private MinioClient minioClient;
+
+    @Autowired
+    @Qualifier("publicMinioClient")
+    private MinioClient publicMinioClient;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
@@ -47,7 +53,8 @@ public class MinioService {
         } catch (Exception e) {
             logger.error(
                 "Erro ao inicializar bucket do MinIO: {}",
-                e.getMessage()
+                e.getMessage(),
+                e
             );
         }
     }
@@ -88,13 +95,18 @@ public class MinioService {
             );
             return fileName;
         } catch (Exception e) {
-            logger.error("Erro ao fazer upload do arquivo: {}", e.getMessage());
+            logger.error(
+                "Erro ao fazer upload do arquivo: {}",
+                e.getMessage(),
+                e
+            );
             throw new RuntimeException("Erro ao fazer upload do arquivo", e);
         }
     }
 
     /**
      * Gera uma URL pré-assinada para acesso temporário ao arquivo
+     * Usa o publicMinioClient para gerar URLs com assinatura válida para localhost
      *
      * @param fileName    Nome do arquivo no MinIO
      * @param expiryMinutes Tempo de expiração da URL em minutos
@@ -102,7 +114,7 @@ public class MinioService {
      */
     public String getPresignedUrl(String fileName, int expiryMinutes) {
         try {
-            String url = minioClient.getPresignedObjectUrl(
+            String url = publicMinioClient.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
                     .bucket(bucketName)
@@ -117,7 +129,11 @@ public class MinioService {
             );
             return url;
         } catch (Exception e) {
-            logger.error("Erro ao gerar URL pré-assinada: {}", e.getMessage());
+            logger.error(
+                "Erro ao gerar URL pré-assinada: {}",
+                e.getMessage(),
+                e
+            );
             throw new RuntimeException("Erro ao gerar URL pré-assinada", e);
         }
     }
@@ -137,7 +153,7 @@ public class MinioService {
             );
             logger.info("Arquivo '{}' deletado do MinIO", fileName);
         } catch (Exception e) {
-            logger.error("Erro ao deletar arquivo: {}", e.getMessage());
+            logger.error("Erro ao deletar arquivo: {}", e.getMessage(), e);
             throw new RuntimeException("Erro ao deletar arquivo", e);
         }
     }

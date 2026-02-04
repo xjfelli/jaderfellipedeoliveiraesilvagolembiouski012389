@@ -1,12 +1,11 @@
 package com.gerenciadorartistas.backend.shared.service;
 
 import com.gerenciadorartistas.backend.shared.dto.UploadResult;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class FileUploadService {
@@ -35,11 +34,18 @@ public class FileUploadService {
      * @param expiryMinutes Tempo de expiração da URL pré-assinada em minutos
      * @return UploadResult com informações do arquivo
      */
-    public UploadResult uploadFile(MultipartFile file, String folder, int expiryMinutes) {
+    public UploadResult uploadFile(
+        MultipartFile file,
+        String folder,
+        int expiryMinutes
+    ) {
         validateFile(file);
 
         String filePath = minioService.uploadFile(file, folder);
-        String presignedUrl = minioService.getPresignedUrl(filePath, expiryMinutes);
+        String presignedUrl = minioService.getPresignedUrl(
+            filePath,
+            expiryMinutes
+        );
 
         return UploadResult.of(
             file.getOriginalFilename(),
@@ -58,8 +64,15 @@ public class FileUploadService {
      * @param folder Pasta de destino (ex: "artists", "albums")
      * @return Lista de UploadResult com informações dos arquivos
      */
-    public List<UploadResult> uploadMultipleFiles(MultipartFile[] files, String folder) {
-        return uploadMultipleFiles(files, folder, DEFAULT_PRESIGNED_URL_EXPIRY_MINUTES);
+    public List<UploadResult> uploadMultipleFiles(
+        MultipartFile[] files,
+        String folder
+    ) {
+        return uploadMultipleFiles(
+            files,
+            folder,
+            DEFAULT_PRESIGNED_URL_EXPIRY_MINUTES
+        );
     }
 
     /**
@@ -70,7 +83,11 @@ public class FileUploadService {
      * @param expiryMinutes Tempo de expiração da URL pré-assinada em minutos
      * @return Lista de UploadResult com informações dos arquivos
      */
-    public List<UploadResult> uploadMultipleFiles(MultipartFile[] files, String folder, int expiryMinutes) {
+    public List<UploadResult> uploadMultipleFiles(
+        MultipartFile[] files,
+        String folder,
+        int expiryMinutes
+    ) {
         List<UploadResult> results = new ArrayList<>();
 
         for (MultipartFile file : files) {
@@ -89,7 +106,10 @@ public class FileUploadService {
      * @return UploadResult com a nova URL pré-assinada
      */
     public UploadResult refreshPresignedUrl(String filePath) {
-        return refreshPresignedUrl(filePath, DEFAULT_PRESIGNED_URL_EXPIRY_MINUTES);
+        return refreshPresignedUrl(
+            filePath,
+            DEFAULT_PRESIGNED_URL_EXPIRY_MINUTES
+        );
     }
 
     /**
@@ -99,12 +119,18 @@ public class FileUploadService {
      * @param expiryMinutes Tempo de expiração da URL pré-assinada em minutos
      * @return UploadResult com a nova URL pré-assinada
      */
-    public UploadResult refreshPresignedUrl(String filePath, int expiryMinutes) {
+    public UploadResult refreshPresignedUrl(
+        String filePath,
+        int expiryMinutes
+    ) {
         if (!minioService.fileExists(filePath)) {
             throw new IllegalArgumentException("Arquivo não encontrado: " + filePath);
         }
 
-        String presignedUrl = minioService.getPresignedUrl(filePath, expiryMinutes);
+        String presignedUrl = minioService.getPresignedUrl(
+            filePath,
+            expiryMinutes
+        );
 
         return UploadResult.of(
             extractFileName(filePath),
