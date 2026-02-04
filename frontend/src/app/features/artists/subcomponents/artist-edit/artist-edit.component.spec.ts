@@ -2,15 +2,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ArtistsCreateComponent } from './artists-create.component';
+import { ArtistEditComponent } from './artist-edit.component';
 
-describe('ArtistsCreateComponent', () => {
-  let component: ArtistsCreateComponent;
-  let fixture: ComponentFixture<ArtistsCreateComponent>;
-  
+describe('ArtistEditComponent', () => {
+  let component: ArtistEditComponent;
+  let fixture: ComponentFixture<ArtistEditComponent>;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ArtistsCreateComponent],
+      imports: [ArtistEditComponent],
       providers: [
         provideRouter([]),
         provideHttpClient(),
@@ -20,7 +20,7 @@ describe('ArtistsCreateComponent', () => {
           useValue: {
             snapshot: {
               paramMap: {
-                get: () => null,
+                get: (key: string) => '1',
               },
             },
           },
@@ -28,12 +28,21 @@ describe('ArtistsCreateComponent', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ArtistsCreateComponent);
+    fixture = TestBed.createComponent(ArtistEditComponent);
     component = fixture.componentInstance;
+    
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should have artist form', () => {
+    expect(component.artistForm).toBeDefined();
+  });
+
+  it('should have loading property', () => {
+    expect(component.loading).toBeDefined();
   });
 });

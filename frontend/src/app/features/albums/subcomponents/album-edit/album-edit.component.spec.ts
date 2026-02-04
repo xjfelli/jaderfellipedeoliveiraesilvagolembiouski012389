@@ -1,16 +1,17 @@
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ArtistsCreateComponent } from './artists-create.component';
+import { AlbumEditComponent } from './album-edit.component';
 
-describe('ArtistsCreateComponent', () => {
-  let component: ArtistsCreateComponent;
-  let fixture: ComponentFixture<ArtistsCreateComponent>;
-  
+describe('AlbumEditComponent', () => {
+  let component: AlbumEditComponent;
+  let fixture: ComponentFixture<AlbumEditComponent>;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ArtistsCreateComponent],
+      imports: [AlbumEditComponent],
       providers: [
         provideRouter([]),
         provideHttpClient(),
@@ -20,7 +21,7 @@ describe('ArtistsCreateComponent', () => {
           useValue: {
             snapshot: {
               paramMap: {
-                get: () => null,
+                get: (key: string) => '1',
               },
             },
           },
@@ -28,12 +29,29 @@ describe('ArtistsCreateComponent', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ArtistsCreateComponent);
+    fixture = TestBed.createComponent(AlbumEditComponent);
     component = fixture.componentInstance;
+    
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should load album on init', () => {
+    vi.spyOn(component, 'loadAlbum');
+    
+    component.ngOnInit();
+    
+    expect(component.loadAlbum).toHaveBeenCalled();
+  });
+
+  it('should have album form', () => {
+    expect(component.albumForm).toBeDefined();
+  });
+
+  it('should have loading property', () => {
+    expect(component.loading).toBeDefined();
   });
 });
