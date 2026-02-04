@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/services/auth.service';
+import { DeleteConfirmationModalComponent } from '../albums/delete-confirmation-modal/delete-confirmation-modal.component';
 import { ArtistsFacade } from './artists.facade';
 import { ArtistsCreateComponent } from './subcomponents/artists-create/artists-create.component';
 import { ArtistsCreateFacade } from './subcomponents/artists-create/artists-create.facade';
@@ -10,7 +11,7 @@ import { ArtistsCreateFacade } from './subcomponents/artists-create/artists-crea
 @Component({
   selector: 'app-artists',
   standalone: true,
-  imports: [CommonModule, FormsModule, ArtistsCreateComponent],
+  imports: [CommonModule, FormsModule, ArtistsCreateComponent, DeleteConfirmationModalComponent],
   providers: [ArtistsFacade, ArtistsCreateFacade],
   templateUrl: './artists.component.html',
   styleUrl: './artists.component.css',
@@ -70,6 +71,29 @@ export class ArtistsComponent implements OnInit {
     if (id) {
       this.router.navigate(['/artists', id, 'edit']);
     }
+  }
+
+  deleteArtist(id: string | undefined): void {
+    this.facade.openDeleteModal(id);
+  }
+
+  get isOpenDeleteModal(): boolean {
+    return this.facade.isOpenDeleteModal();
+  }
+
+  closeDeleteModal(): void {
+    this.facade.closeDeleteModal();
+  }
+
+  confirmDelete(): void {
+    this.facade.confirmDeleteArtist();
+  }
+
+  get artistToDeleteName(): string {
+    const artistId = this.facade.artistToDelete();
+    if (!artistId) return '';
+    const artist = this.artists().find(a => a.id === artistId);
+    return artist?.name || '';
   }
 
   onSearch(searchTerm: string): void {

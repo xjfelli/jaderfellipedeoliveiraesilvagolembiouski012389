@@ -84,4 +84,53 @@ describe('ArtistsComponent', () => {
   it('should have artists from facade', () => {
     expect(component.artists).toBeDefined();
   });
+
+  describe('Delete Artist', () => {
+    it('should call facade.openDeleteModal when deleteArtist is called', () => {
+      const openDeleteModalSpy = vi.spyOn(facade, 'openDeleteModal');
+      const artistId = 'test-id-123';
+      
+      component.deleteArtist(artistId);
+      
+      expect(openDeleteModalSpy).toHaveBeenCalledWith(artistId);
+    });
+
+    it('should get delete modal visibility state from facade', () => {
+      const isOpenSpy = vi.spyOn(facade, 'isOpenDeleteModal').mockReturnValue(true);
+      
+      expect(component.isOpenDeleteModal).toBe(true);
+      expect(isOpenSpy).toHaveBeenCalled();
+    });
+
+    it('should close delete modal', () => {
+      const closeSpy = vi.spyOn(facade, 'closeDeleteModal');
+      
+      component.closeDeleteModal();
+      
+      expect(closeSpy).toHaveBeenCalled();
+    });
+
+    it('should confirm delete', () => {
+      const confirmSpy = vi.spyOn(facade, 'confirmDeleteArtist');
+      
+      component.confirmDelete();
+      
+      expect(confirmSpy).toHaveBeenCalled();
+    });
+
+    it('should return artist name for delete confirmation', () => {
+      vi.spyOn(facade, 'artistToDelete').mockReturnValue('test-id');
+      component.artists = vi.fn(() => [
+        { id: 'test-id', name: 'Test Artist' }
+      ]) as any;
+      
+      expect(component.artistToDeleteName).toBe('Test Artist');
+    });
+
+    it('should return empty string if no artist to delete', () => {
+      vi.spyOn(facade, 'artistToDelete').mockReturnValue(undefined);
+      
+      expect(component.artistToDeleteName).toBe('');
+    });
+  });
 });

@@ -15,6 +15,8 @@ export class ArtistsFacade {
   artists = signal<Artist[]>([]);
   loading = signal(false);
   isOpenCreateArtistsModal = signal(false);
+  isOpenDeleteModal = signal(false);
+  artistToDelete = signal<string | undefined>(undefined);
 
   // Controles de busca e ordenação
   searchTerm = signal('');
@@ -125,5 +127,35 @@ export class ArtistsFacade {
         },
       });
     }
+  }
+
+  openDeleteModal(artistId: string | undefined): void {
+    if (artistId) {
+      this.artistToDelete.set(artistId);
+      this.isOpenDeleteModal.set(true);
+    }
+  }
+
+  closeDeleteModal(): void {
+    this.isOpenDeleteModal.set(false);
+    this.artistToDelete.set(undefined);
+  }
+
+  confirmDeleteArtist(): void {
+    const artistId = this.artistToDelete();
+    if (!artistId) return;
+
+    this.loading.set(true);
+    this.artistsService.deleteArtist(artistId).subscribe({
+      next: () => {
+        this.closeDeleteModal();
+        this.loadArtists();
+      },
+      error: (error) => {
+        console.error('Erro ao excluir artista:', error);
+        alert('Erro ao excluir artista. Tente novamente.');
+        this.loading.set(false);
+      },
+    });
   }
 }
