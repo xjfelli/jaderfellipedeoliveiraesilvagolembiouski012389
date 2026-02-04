@@ -32,6 +32,12 @@ public class MinioService {
     @Value("${minio.bucket-name}")
     private String bucketName;
 
+    @Value("${minio.url}")
+    private String minioUrl;
+
+    @Value("${minio.public-url}")
+    private String minioPublicUrl;
+
     /**
      * Inicializa o bucket do MinIO se não existir
      */
@@ -106,11 +112,13 @@ public class MinioService {
 
     /**
      * Gera uma URL pré-assinada para acesso temporário ao arquivo
-     * Usa o publicMinioClient para gerar URLs com assinatura válida para localhost
+     *
+     * Conecta via minio:9000 e gera URLs com localhost/artistas-media/.
+     * O nginx faz proxy reverso preservando Host: minio:9000, mantendo assinatura válida.
      *
      * @param fileName    Nome do arquivo no MinIO
      * @param expiryMinutes Tempo de expiração da URL em minutos
-     * @return URL pré-assinada
+     * @return URL pré-assinada válida para acesso externo via nginx
      */
     public String getPresignedUrl(String fileName, int expiryMinutes) {
         try {
@@ -122,12 +130,18 @@ public class MinioService {
                     .expiry(expiryMinutes, TimeUnit.MINUTES)
                     .build()
             );
+
+            // Substitui minio:9000 por localhost para acesso via nginx
+            // O nginx preserva o header Host correto para validação de assinatura
+            String publicUrl = url.replace("http://minio:9000", "http://localhost");
+
             logger.info(
-                "URL pré-assinada gerada para '{}' com expiração de {} minutos",
+                "URL pré-assinada gerada para '{}' com expiração de {} minutos: {}",
                 fileName,
-                expiryMinutes
+                expiryMinutes,
+                publicUrl
             );
-            return url;
+            return publicUrl;
         } catch (Exception e) {
             logger.error(
                 "Erro ao gerar URL pré-assinada: {}",
