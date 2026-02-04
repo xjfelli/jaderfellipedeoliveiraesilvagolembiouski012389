@@ -3,6 +3,8 @@ package com.gerenciadorartistas.backend.shared.exception;
 import com.gerenciadorartistas.backend.shared.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +17,20 @@ import org.springframework.web.server.ResponseStatusException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(
+        GlobalExceptionHandler.class
+    );
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(
         AccessDeniedException ex,
         HttpServletRequest request
     ) {
+        logger.warn(
+            "Acesso negado para {}: {}",
+            request.getRequestURI(),
+            ex.getMessage()
+        );
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
             ApiResponse.error(
                 "ACCESS_DENIED",
@@ -39,6 +50,7 @@ public class GlobalExceptionHandler {
             .map(error -> error.getField() + ": " + error.getDefaultMessage())
             .collect(Collectors.joining("; "));
 
+        logger.warn("Erro de validação: {}", errorMessages);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             ApiResponse.error("VALIDATION_ERROR", errorMessages)
         );
@@ -62,6 +74,7 @@ public class GlobalExceptionHandler {
             }
         }
 
+        logger.error("Erro de integridade de dados: {}", rootCauseMessage, ex);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
             ApiResponse.error("DATA_INTEGRITY_ERROR", message)
         );
@@ -72,7 +85,7 @@ public class GlobalExceptionHandler {
         ResponseStatusException ex
     ) {
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
-
+        logger.warn("ResponseStatusException [{}]: {}", status, ex.getReason());
         return ResponseEntity.status(status).body(
             ApiResponse.error("REQUEST_ERROR", ex.getReason())
         );
@@ -82,6 +95,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(
         IllegalArgumentException ex
     ) {
+        logger.warn("Argumento inválido: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             ApiResponse.error("INVALID_ARGUMENT", ex.getMessage())
         );
@@ -91,6 +105,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleRuntimeException(
         RuntimeException ex
     ) {
+        logger.error("RuntimeException: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
             ApiResponse.error("RUNTIME_ERROR", ex.getMessage())
         );
@@ -101,6 +116,12 @@ public class GlobalExceptionHandler {
         Exception ex,
         HttpServletRequest request
     ) {
+        logger.error(
+            "Erro interno não tratado em {}: {}",
+            request.getRequestURI(),
+            ex.getMessage(),
+            ex
+        );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
             ApiResponse.error("INTERNAL_ERROR", "Erro interno do servidor")
         );
