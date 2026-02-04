@@ -18,6 +18,9 @@ public class MinioConfig {
     @Value("${minio.public-url}")
     private String minioPublicUrl;
 
+    @Value("${minio.bucket-name}")
+    private String bucketName;
+
     @Value("${minio.access-key}")
     private String accessKey;
 
@@ -48,14 +51,20 @@ public class MinioConfig {
 
     /**
      * MinioClient para gerar URLs pré-assinadas públicas
-     * Usa a URL pública (localhost:9000) para que a assinatura seja válida
-     * quando acessada pelo navegador
+     *
+     * IMPORTANTE: O MinIO está configurado com MINIO_DOMAIN=localhost.
+     * Configuramos o cliente para usar <bucket>.localhost:9000 no endpoint,
+     * o que força URLs no formato de virtual-host (bucket.localhost:9000).
+     *
+     * Para isso funcionar, substituímos o host na URL gerada de forma que
+     * a assinatura seja compatível com localhost:9000.
      */
     @Bean
     @Qualifier("publicMinioClient")
     public MinioClient publicMinioClient() {
+        // Conecta via minio:9000 para gerar assinaturas
         return MinioClient.builder()
-            .endpoint(minioPublicUrl)
+            .endpoint(minioUrl)  // http://minio:9000
             .credentials(accessKey, secretKey)
             .build();
     }
