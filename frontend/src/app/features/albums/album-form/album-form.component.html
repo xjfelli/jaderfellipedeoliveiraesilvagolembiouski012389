@@ -1,0 +1,205 @@
+<!-- Backdrop do modal -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100]" (click)="closeModal()">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <!-- Conteúdo do modal -->
+    <div class="p-6" (click)="$event.stopPropagation()">
+      <!-- Cabeçalho -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">
+          {{ isEditMode ? 'Editar Álbum' : 'Adicionar Álbum' }}
+        </h2>
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="text-gray-400 hover:text-gray-600 transition"
+        >
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mensagem de erro -->
+      @if (error) {
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {{ error }}
+        </div>
+      }
+
+      <!-- Formulário -->
+      <form [formGroup]="albumForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Preview da capa -->
+        @if (imagePreview) {
+          <div class="flex justify-center mb-4">
+            <img [src]="imagePreview" alt="Preview" class="w-48 h-48 object-cover rounded-lg shadow-lg border-4 border-purple-200">
+          </div>
+        }
+
+        <!-- Campo de Upload de Capa -->
+        <div>
+          <label for="file" class="block text-sm font-medium text-gray-700 mb-2">
+            Capa do Álbum {{ !isEditMode ? '*' : '' }}
+          </label>
+          <input
+            id="file"
+            type="file"
+            (change)="onFileSelected($event)"
+            accept="image/*"
+            class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer"
+          />
+          <p class="mt-1 text-xs text-gray-500">
+            {{ isEditMode ? 'Selecione uma nova imagem apenas se desejar alterar a capa' : 'Selecione uma imagem para a capa (obrigatório)' }}
+          </p>
+        </div>
+
+        <!-- Campo Seleção de Artista -->
+        <div>
+          <label for="artistId" class="block text-sm font-medium text-gray-700 mb-2">
+            Artista *
+          </label>
+          @if (loadingArtists) {
+            <div class="flex items-center gap-2 text-gray-500">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+              <span class="text-sm">Carregando artistas...</span>
+            </div>
+          } @else {
+            <select
+              id="artistId"
+              formControlName="artistId"
+              [class.border-red-500]="getFieldError('artistId')"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              <option value="">Selecione um artista</option>
+              @for (artist of artists; track artist.id) {
+                <option [value]="artist.id">{{ artist.name }}</option>
+              }
+            </select>
+            @if (getFieldError('artistId')) {
+              <p class="mt-2 text-sm text-red-600">{{ getFieldError('artistId') }}</p>
+            }
+          }
+        </div>
+
+        <!-- Campo Título -->
+        <div>
+          <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+            Título do Álbum *
+          </label>
+          <input
+            id="title"
+            type="text"
+            formControlName="title"
+            [class.border-red-500]="getFieldError('title')"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            placeholder="Digite o título do álbum"
+          />
+          @if (getFieldError('title')) {
+            <p class="mt-2 text-sm text-red-600">{{ getFieldError('title') }}</p>
+          }
+        </div>
+
+        <!-- Campos em linha: Ano e Número de Faixas -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Campo Ano de Lançamento -->
+          <div>
+            <label for="releaseYear" class="block text-sm font-medium text-gray-700 mb-2">
+              Ano de Lançamento
+            </label>
+            <input
+              id="releaseYear"
+              type="number"
+              formControlName="releaseYear"
+              [class.border-red-500]="getFieldError('releaseYear')"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="Ex: 2024"
+            />
+            @if (getFieldError('releaseYear')) {
+              <p class="mt-2 text-sm text-red-600">{{ getFieldError('releaseYear') }}</p>
+            }
+          </div>
+
+          <!-- Campo Número de Faixas -->
+          <div>
+            <label for="trackCount" class="block text-sm font-medium text-gray-700 mb-2">
+              Número de Faixas
+            </label>
+            <input
+              id="trackCount"
+              type="number"
+              formControlName="trackCount"
+              [class.border-red-500]="getFieldError('trackCount')"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="Ex: 12"
+            />
+            @if (getFieldError('trackCount')) {
+              <p class="mt-2 text-sm text-red-600">{{ getFieldError('trackCount') }}</p>
+            }
+          </div>
+        </div>
+
+        <!-- Campo Gravadora -->
+        <div>
+          <label for="recordLabel" class="block text-sm font-medium text-gray-700 mb-2">
+            Gravadora
+          </label>
+          <input
+            id="recordLabel"
+            type="text"
+            formControlName="recordLabel"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            placeholder="Digite o nome da gravadora"
+          />
+        </div>
+
+        <!-- Campo Descrição -->
+        <div>
+          <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+            Descrição
+          </label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="3"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            placeholder="Digite uma descrição do álbum (opcional)"
+          ></textarea>
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="flex gap-4 pt-4">
+          <button
+            type="submit"
+            [disabled]="saving || albumForm.invalid"
+            [class.opacity-50]="saving || albumForm.invalid"
+            [class.cursor-not-allowed]="saving || albumForm.invalid"
+            class="flex-1 px-6 py-3 text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-700 hover:to-pink-700 transition duration-150 font-medium flex items-center justify-center gap-2"
+          >
+            @if (saving) {
+              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Salvando...</span>
+            } @else {
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>{{ isEditMode ? 'Atualizar' : 'Adicionar' }}</span>
+            }
+          </button>
+
+          <button
+            type="button"
+            (click)="closeModal()"
+            [disabled]="saving"
+            class="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 font-medium"
+          >
+            Cancelar
+          </button>
+        </div>
+
+        <!-- Nota -->
+        <p class="text-xs text-gray-500 text-center pt-2">
+          * Campos obrigatórios {{ !isEditMode ? '(incluindo capa do álbum)' : '' }}
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
