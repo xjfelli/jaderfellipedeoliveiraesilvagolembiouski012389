@@ -1,0 +1,287 @@
+<div
+  class="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 py-12 px-4 sm:px-6 lg:px-8"
+>
+  <div class="max-w-md w-full space-y-8">
+    <!-- Card do Registro -->
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+      <!-- Header -->
+      <div class="text-center">
+        <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Criar nova conta</h2>
+        <p class="text-sm text-gray-600">Preencha os dados para se registrar</p>
+      </div>
+
+      <!-- Mensagem de erro -->
+      @if (errorMessage()) {
+        <div
+          class="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start"
+          role="alert"
+        >
+          <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <!-- Mensagem de sucesso -->
+      @if (successMessage()) {
+        <div
+          class="mt-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start"
+          role="alert"
+        >
+          <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span>{{ successMessage() }}</span>
+        </div>
+      }
+
+      <!-- Formulário -->
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="mt-8 space-y-5">
+        <!-- Campo Nome Completo -->
+        <div>
+          <label for="fullname" class="block text-sm font-medium text-gray-700 mb-2">
+            Nome Completo
+          </label>
+          <input
+            id="fullname"
+            name="fullname"
+            type="text"
+            formControlName="fullname"
+            autocomplete="name"
+            class="appearance-none relative block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-150"
+            [class.border-red-500]="hasError('fullname', 'required') || hasError('fullname', 'minlength')"
+            placeholder="Digite seu nome completo"
+          />
+          @if (hasError('fullname', 'required') || hasError('fullname', 'minlength')) {
+            <p class="mt-1 text-sm text-red-600">
+              {{ getErrorMessage('fullname') }}
+            </p>
+          }
+        </div>
+
+        <!-- Campo Usuário -->
+        <div>
+          <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+            Nome de Usuário
+          </label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            class="appearance-none relative block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-150"
+            [class.border-red-500]="hasError('username', 'required') || hasError('username', 'minlength')"
+            placeholder="Digite seu nome de usuário"
+          />
+          @if (hasError('username', 'required') || hasError('username', 'minlength')) {
+            <p class="mt-1 text-sm text-red-600">
+              {{ getErrorMessage('username') }}
+            </p>
+          }
+        </div>
+
+        <!-- Campo Email -->
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            class="appearance-none relative block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-150"
+            [class.border-red-500]="hasError('email', 'required') || hasError('email', 'email')"
+            placeholder="seuemail@exemplo.com"
+          />
+          @if (hasError('email', 'required') || hasError('email', 'email')) {
+            <p class="mt-1 text-sm text-red-600">
+              {{ getErrorMessage('email') }}
+            </p>
+          }
+        </div>
+
+        <!-- Campo Senha -->
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-2"> Senha </label>
+          <div class="relative">
+            <input
+              id="password"
+              name="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              class="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-150"
+              [class.border-red-500]="hasError('password', 'required') || hasError('password', 'minlength')"
+              placeholder="Digite uma senha segura"
+            />
+            <button
+              type="button"
+              (click)="togglePasswordVisibility()"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              @if (showPassword()) {
+                <!-- Ícone olho aberto -->
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              } @else {
+                <!-- Ícone olho fechado -->
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                  />
+                </svg>
+              }
+            </button>
+          </div>
+          @if (hasError('password', 'required') || hasError('password', 'minlength')) {
+            <p class="mt-1 text-sm text-red-600">
+              {{ getErrorMessage('password') }}
+            </p>
+          }
+        </div>
+
+        <!-- Campo Confirmar Senha -->
+        <div>
+          <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
+            Confirmar Senha
+          </label>
+          <div class="relative">
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              class="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-150"
+              [class.border-red-500]="hasError('confirmPassword', 'required') || hasError('confirmPassword', 'passwordMismatch')"
+              placeholder="Digite a senha novamente"
+            />
+            <button
+              type="button"
+              (click)="toggleConfirmPasswordVisibility()"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              @if (showConfirmPassword()) {
+                <!-- Ícone olho aberto -->
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              } @else {
+                <!-- Ícone olho fechado -->
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                  />
+                </svg>
+              }
+            </button>
+          </div>
+          @if (hasError('confirmPassword', 'required') || hasError('confirmPassword', 'passwordMismatch')) {
+            <p class="mt-1 text-sm text-red-600">
+              {{ getErrorMessage('confirmPassword') }}
+            </p>
+          }
+        </div>
+
+        <!-- Botão de Registro -->
+        <div class="pt-2">
+          <button
+            type="submit"
+            [disabled]="isLoading()"
+            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 shadow-lg"
+          >
+            @if (isLoading()) {
+              <svg
+                class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Registrando...
+            } @else {
+              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                />
+              </svg>
+              Criar Conta
+            }
+          </button>
+        </div>
+
+        <!-- Link para Login -->
+        <div class="text-center">
+          <a
+            routerLink="/login"
+            class="text-sm text-purple-600 hover:text-purple-800 font-medium transition duration-150"
+          >
+            Já tem uma conta? Faça login
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Info adicional -->
+    <div class="text-center text-white text-sm">
+      <p class="font-medium">Sistema de Gerenciamento de Artistas</p>
+    </div>
+  </div>
+</div>

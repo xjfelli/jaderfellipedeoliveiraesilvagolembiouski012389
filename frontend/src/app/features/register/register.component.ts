@@ -1,22 +1,23 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { RegisterFacade } from './register.facade';
+import { RegisterService } from './register.service';
 import { RouterModule } from '@angular/router';
-import { LoginFacade } from './login.facade';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
-  providers: [LoginFacade],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.css',
+  providers: [RegisterFacade, RegisterService],
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.css',
 })
-export class LoginComponent {
-  constructor(public facade: LoginFacade) {}
+export class RegisterComponent {
+  constructor(public facade: RegisterFacade) {}
 
-  get loginForm(): any {
-    return this.facade.loginForm;
+  get registerForm(): any {
+    return this.facade.registerForm;
   }
 
   isLoading(): boolean {
@@ -27,20 +28,28 @@ export class LoginComponent {
     return this.facade.errorMessage();
   }
 
+  successMessage(): string | null {
+    return this.facade.successMessage();
+  }
+
   showPassword(): boolean {
     return this.facade.showPassword();
   }
 
-  toggleShowCreateArtistsModal(): boolean {
-    return this.facade.showCreateArtistsModal();
+  showConfirmPassword(): boolean {
+    return this.facade.showConfirmPassword();
   }
 
   onSubmit(): void {
-    this.facade.login();
+    this.facade.register();
   }
 
   togglePasswordVisibility(): void {
     this.facade.togglePasswordVisibility();
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.facade.toggleConfirmPasswordVisibility();
   }
 
   hasError(fieldName: string, errorType: string): boolean {
