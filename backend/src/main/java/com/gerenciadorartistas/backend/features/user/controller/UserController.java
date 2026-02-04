@@ -20,7 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/v1/api/usuarios")
+@RequestMapping("/api/v1/usuarios")
 @Tag(
     name = "Usuários",
     description = "Endpoints para gerenciamento de usuários"

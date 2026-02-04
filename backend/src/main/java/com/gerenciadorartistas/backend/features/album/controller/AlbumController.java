@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/v1/api/albums")
+@RequestMapping("/api/v1/albums")
 @Tag(name = "Albums", description = "Endpoints para gerenciamento de álbuns")
 public class AlbumController {
 
@@ -96,7 +96,7 @@ public class AlbumController {
         description = "Cria um novo álbum no sistema"
     )
     public ResponseEntity<AlbumPresenterDTO> create(
-        @Valid @RequestBody AlbumDTO albumDTO,
+        @Valid @RequestPart("album") AlbumDTO albumDTO,
         @RequestPart(value = "file", required = true) MultipartFile file
     ) {
         try {

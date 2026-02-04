@@ -43,7 +43,7 @@ public class OpenApiConfig {
                         .scheme("bearer")
                         .bearerFormat("JWT")
                         .description(
-                            "Insira o token JWT obtido no endpoint /v1/api/auth/login"
+                            "Insira o token JWT obtido no endpoint /api/v1/auth/login"
                         )
                 )
             );

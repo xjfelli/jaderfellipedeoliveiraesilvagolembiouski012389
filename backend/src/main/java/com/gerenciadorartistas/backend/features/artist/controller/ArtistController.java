@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/v1/api/artists")
+@RequestMapping("/api/v1/artists")
 @Tag(name = "Artists", description = "Endpoints para gerenciamento de artistas")
 public class ArtistController {
 
@@ -34,7 +34,7 @@ public class ArtistController {
     public ResponseEntity<List<ArtistPresenterDTO>> findAll(
         @RequestParam(
             required = false,
-            defaultValue = "false"
+            defaultValue = "true"
         ) boolean includeAlbums
     ) {
         List<ArtistPresenterDTO> artists = includeAlbums
@@ -58,7 +58,7 @@ public class ArtistController {
         ) String sortDirection,
         @RequestParam(
             required = false,
-            defaultValue = "false"
+            defaultValue = "true"
         ) boolean includeAlbums
     ) {
         Sort.Direction direction = sortDirection.equalsIgnoreCase("desc")
