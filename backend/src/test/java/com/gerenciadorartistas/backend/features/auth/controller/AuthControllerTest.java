@@ -79,7 +79,7 @@ class AuthControllerTest {
     }
 
     @Nested
-    @DisplayName("POST /v1/api/auth/login")
+    @DisplayName("POST /api/v1/auth/login")
     class LoginEndpoint {
 
         @Test
@@ -105,7 +105,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -133,7 +133,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -154,7 +154,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -175,7 +175,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -196,7 +196,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -221,7 +221,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -242,7 +242,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}")
                 )
@@ -257,7 +257,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.TEXT_PLAIN)
                         .content("username=test&password=test")
                 )
@@ -268,7 +268,7 @@ class AuthControllerTest {
     }
 
     @Nested
-    @DisplayName("POST /v1/api/auth/refresh")
+    @DisplayName("POST /api/v1/auth/refresh")
     class RefreshTokenEndpoint {
 
         @Test
@@ -298,7 +298,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/refresh")
+                    post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(refreshRequest)
@@ -327,7 +327,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/refresh")
+                    post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(refreshRequest)
@@ -351,7 +351,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/refresh")
+                    post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(refreshRequest)
@@ -381,7 +381,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/refresh")
+                    post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(refreshRequest)
@@ -418,7 +418,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/refresh")
+                    post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(refreshRequest)
@@ -441,7 +441,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/refresh")
+                    post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}")
                 )
@@ -480,7 +480,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -512,7 +512,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -551,7 +551,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/login")
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))
                 )
@@ -588,7 +588,7 @@ class AuthControllerTest {
             // Act & Assert
             mockMvc
                 .perform(
-                    post("/v1/api/auth/refresh")
+                    post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(refreshRequest)
