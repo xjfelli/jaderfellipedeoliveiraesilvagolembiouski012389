@@ -30,6 +30,10 @@ export class LoginComponent {
     return this.facade.showPassword();
   }
 
+  toggleShowCreateArtistsModal(): boolean {
+    return this.facade.showCreateArtistsModal();
+  }
+
   onSubmit(): void {
     this.facade.login();
   }

@@ -20,6 +20,7 @@ export class LoginFacade {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   showPassword = signal(false);
+  showCreateArtistsModal = signal(false);
 
   constructor() {
     this.loginForm = this.createLoginForm();
