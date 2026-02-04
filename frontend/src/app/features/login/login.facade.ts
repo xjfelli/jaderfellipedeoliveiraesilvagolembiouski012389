@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthService, LoginCredentials } from '../../services/auth.service';
+import { AuthService, LoginCredentials } from '../../core/auth/services/auth.service';
 
 /**
  * Facade para a tela de login
@@ -20,6 +20,7 @@ export class LoginFacade {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   showPassword = signal(false);
+  showCreateArtistsModal = signal(false);
 
   constructor() {
     this.loginForm = this.createLoginForm();

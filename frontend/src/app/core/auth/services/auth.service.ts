@@ -1,25 +1,14 @@
-import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, signal, PLATFORM_ID, afterNextRender } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, BehaviorSubject, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { AuthResponse, User } from '../models/auth.model';
 
 export interface LoginCredentials {
   username: string;
   password: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  refreshToken?: string;
-  expiresIn?: number;
-}
-
-export interface User {
-  id: string;
-  username: string;
-  email?: string;
 }
 
 @Injectable({
@@ -30,46 +19,55 @@ export class AuthService {
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
 
-  // Verifica se está rodando no browser
   private isBrowser: boolean;
 
-  // URL base da API - ajuste conforme seu backend
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = 'http://localhost:8080/v1/api';
 
   private tokenKey = 'auth_token';
   private refreshTokenKey = 'refresh_token';
   private tokenExpirationKey = 'token_expiration';
 
-  // Signal para indicar se o usuário está autenticado
-  isAuthenticated = signal(false);
+  private initialAuthState = false;
 
-  // BehaviorSubject para o usuário atual
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
   private tokenRefreshTimer: any;
 
+  isAuthenticated = signal(this.initialAuthState);
+
+  /** Indica se a hidratação do cliente foi concluída */
+  isHydrated = signal(false);
+
   constructor() {
     this.isBrowser = isPlatformBrowser(this.platformId);
 
     // Verifica se há token válido ao iniciar (apenas no browser)
-    if (this.isBrowser && this.hasValidToken()) {
-      this.isAuthenticated.set(true);
-      this.scheduleTokenRefresh();
-
-      // Carrega informações do usuário do token
+    if (this.isBrowser) {
       const token = this.getToken();
       if (token) {
+        this.isAuthenticated.set(true);
+        this.scheduleTokenRefresh();
+
+        // Carrega informações do usuário do token
         const user = this.decodeToken(token);
         this.currentUserSubject.next(user);
       }
+      // Marca como hidratado imediatamente no browser
+      this.isHydrated.set(true);
     }
+
+    // Callback após a hidratação do Angular
+    afterNextRender(() => {
+      this.isHydrated.set(true);
+    });
   }
 
   /**
    * Realiza o login do usuário
    */
   login(credentials: LoginCredentials): Observable<AuthResponse> {
+    console.log('Iniciando login com credenciais:', credentials);
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials).pipe(
       tap((response) => this.handleAuthResponse(response)),
       catchError((error) => {
@@ -116,6 +114,22 @@ export class AuthService {
   }
 
   /**
+   * Renova o token silenciosamente (sem fazer logout automático em caso de erro)
+   * Usado pelo interceptor para controle manual do fluxo
+   */
+  refreshTokenSilent(): Observable<AuthResponse> {
+    const refreshToken = this.getRefreshToken();
+
+    if (!refreshToken) {
+      return throwError(() => new Error('Refresh token não encontrado'));
+    }
+
+    return this.http
+      .post<AuthResponse>(`${this.apiUrl}/auth/refresh`, { refreshToken })
+      .pipe(tap((response) => this.handleAuthResponse(response)));
+  }
+
+  /**
    * Obtém o token de acesso
    */
   getToken(): string | null {
@@ -151,13 +165,22 @@ export class AuthService {
   }
 
   /**
+   * Verifica sincronamente se está autenticado (para uso nos guards)
+   * Verifica diretamente o localStorage sem depender do signal
+   */
+  isAuthenticatedSync(): boolean {
+    if (!this.isBrowser) return false;
+    return !!this.getToken();
+  }
+
+  /**
    * Processa a resposta de autenticação
    */
   private handleAuthResponse(response: AuthResponse): void {
     if (!this.isBrowser) return;
 
     // Armazena o token
-    localStorage.setItem(this.tokenKey, response.token);
+    localStorage.setItem(this.tokenKey, response.accessToken);
 
     // Armazena o refresh token se disponível
     if (response.refreshToken) {
@@ -165,14 +188,14 @@ export class AuthService {
     }
 
     // Calcula e armazena a data de expiração
-    const expirationDate = this.calculateExpirationDate(response.expiresIn);
+    const expirationDate = this.calculateExpirationDate(parseInt(response.expiresIn));
     localStorage.setItem(this.tokenExpirationKey, expirationDate.toISOString());
 
     // Atualiza o estado de autenticação
     this.isAuthenticated.set(true);
 
     // Decodifica o token para obter informações do usuário
-    const user = this.decodeToken(response.token);
+    const user = this.decodeToken(response.accessToken);
     this.currentUserSubject.next(user);
 
     // Agenda a renovação do token
@@ -200,9 +223,10 @@ export class AuthService {
       const decoded = JSON.parse(atob(payload));
 
       return {
-        id: decoded.sub || decoded.id,
+        id: parseInt(decoded.sub || decoded.id, 10).toString(),
         username: decoded.username || decoded.name,
         email: decoded.email,
+        fullname: decoded.fullname || decoded.name,
       };
     } catch (error) {
       console.error('Erro ao decodificar token:', error);
