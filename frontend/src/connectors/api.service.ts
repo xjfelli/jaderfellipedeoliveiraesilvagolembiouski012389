@@ -13,7 +13,7 @@ export class ApiService {
   private http = inject(HttpClient);
 
   // URL base da API - usa proxy em desenvolvimento
-  private apiUrl = '/v1/api';
+  private apiUrl = '/api/v1';
 
   /**
    * Método GET genérico
