@@ -60,7 +60,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth ->
                 auth
                     // Públicos - Autenticação
-                    .requestMatchers("/v1/api/auth/**")
+                    .requestMatchers("/api/v1/auth/**")
                     .permitAll()
                     // Públicos - Health checks
                     .requestMatchers("/api/health", "/api/info")
@@ -76,15 +76,15 @@ public class SecurityConfig {
                     )
                     .permitAll()
                     // Usuários - Apenas registro é público, demais endpoints requerem autenticação
-                    .requestMatchers(HttpMethod.POST, "/v1/api/usuarios")
+                    .requestMatchers(HttpMethod.POST, "/api/v1/usuarios")
                     .permitAll()
-                    .requestMatchers("/v1/api/usuarios/**")
+                    .requestMatchers("/api/v1/usuarios/**")
                     .authenticated()
                     // Artistas - Públicos
-                    .requestMatchers("/v1/api/artistas/**")
+                    .requestMatchers("/api/v1/artistas/**")
                     .permitAll()
                     // Albums - Protegidos
-                    .requestMatchers("/v1/api/albums/**")
+                    .requestMatchers("/api/v1/albums/**")
                     .authenticated()
                     .anyRequest()
                     .authenticated()
