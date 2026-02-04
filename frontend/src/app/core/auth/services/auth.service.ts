@@ -21,7 +21,7 @@ export class AuthService {
 
   private isBrowser: boolean;
 
-  private apiUrl = 'http://localhost:8080/v1/api';
+  private apiUrl = '/api/v1';
 
   private tokenKey = 'auth_token';
   private refreshTokenKey = 'refresh_token';
@@ -176,7 +176,7 @@ export class AuthService {
   /**
    * Processa a resposta de autenticação
    */
-  private handleAuthResponse(response: AuthResponse): void {
+  public handleAuthResponse(response: AuthResponse): void {
     if (!this.isBrowser) return;
 
     // Armazena o token
