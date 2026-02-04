@@ -1,55 +1,248 @@
 <div class="min-h-screen bg-gray-50">
-  <!-- Header -->
-  <header class="bg-white shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Gerenciamento de Álbuns</h1>
-          @if (currentUser$ | async; as user) {
-            <p class="text-sm text-gray-600 mt-1">Bem-vindo, {{ user.username }}!</p>
-          }
-        </div>
-        <div class="flex gap-4">
-          <button
-            (click)="navigateToArtists()"
-            class="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition duration-150"
-          >
-            Ver Artistas
-          </button>
-          <button
-            (click)="logout()"
-            class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-150 flex items-center gap-2"
-          >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-            Sair
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
-
   <!-- Conteúdo Principal -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white rounded-lg shadow p-6">
-      <div class="text-center py-12">
-        <svg class="mx-auto h-24 w-24 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-        </svg>
-        <h3 class="mt-4 text-lg font-medium text-gray-900">Lista de Álbuns</h3>
-        <p class="mt-2 text-sm text-gray-500">
-          A implementação completa da lista de álbuns será adicionada aqui.
-        </p>
-        <p class="mt-1 text-sm text-gray-500">
-          Esta é uma página protegida por autenticação JWT.
-        </p>
-        <div class="mt-6">
-          <button class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition duration-150 font-medium">
-            + Adicionar Álbum
-          </button>
+    <!-- Barra de ferramentas -->
+    <div class="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <!-- Busca e Ordenação -->
+      <div class="flex gap-2 flex-1 w-full sm:max-w-2xl">
+        <!-- Campo de Busca -->
+        <div class="flex-1 relative">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearch($event)"
+            placeholder="Buscar por título ou artista..."
+            class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+          <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          @if (searchTerm) {
+            <button
+              (click)="clearSearch()"
+              class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          }
         </div>
+
+        <!-- Botão de Ordenação -->
+        <button
+          (click)="toggleSortOrder()"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 flex items-center gap-2"
+          title="{{ sortOrder === 'desc' ? 'Mostrar mais antigos' : 'Mostrar mais recentes' }}"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            @if (sortOrder === 'desc') {
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/>
+            } @else {
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+            }
+          </svg>
+          <span class="hidden sm:inline">{{ sortOrder === 'desc' ? 'Recentes' : 'Antigos' }}</span>
+        </button>
       </div>
+
+      <!-- Botão Adicionar -->
+      <button
+        (click)="toggleVisibilityAlbumModal()"
+        class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-700 hover:to-pink-700 transition duration-150 flex items-center gap-2"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Adicionar
+      </button>
     </div>
+
+    <!-- Loading -->
+    @if (isLoading) {
+      <div class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    }
+
+    <!-- Grid de cards -->
+    @if (!isLoading) {
+      @if (albums().length === 0) {
+        <!-- Mensagem quando não há álbuns -->
+        <div class="bg-white rounded-lg shadow p-12 text-center">
+          <svg class="mx-auto h-24 w-24 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          <h3 class="mt-4 text-lg font-medium text-gray-900">Nenhum álbum encontrado</h3>
+          <p class="mt-2 text-sm text-gray-500">Comece adicionando um novo álbum.</p>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          @for (album of albums(); track album.id) {
+            <div class="bg-white rounded-lg shadow hover:shadow-lg transition duration-150 overflow-hidden">
+              <!-- Cabeçalho do card -->
+              @if (album.coverUrl) {
+                <img [src]="album.coverUrl" [alt]="album.title" class="w-full h-48 object-cover">
+              } @else {
+                <div class="bg-gradient-to-r from-pink-600 to-purple-600 h-48 flex items-center justify-center">
+                  <svg class="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                  </svg>
+                </div>
+              }
+
+              <!-- Conteúdo do card -->
+              <div class="p-4">
+                <h3 class="text-lg font-semibold text-gray-900 truncate" [title]="album.title">
+                  {{ album.title }}
+                </h3>
+
+                <!-- Artistas -->
+                @if (album.artists && album.artists.length > 0) {
+                  <div class="mt-2 flex flex-wrap gap-1">
+                    @for (artist of album.artists; track artist.id) {
+                      <button
+                        (click)="viewArtist(artist.id)"
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-700 bg-purple-50 rounded-full hover:bg-purple-100 transition duration-150"
+                      >
+                        {{ artist.name }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                <!-- Informações adicionais -->
+                <div class="mt-2 space-y-1">
+                  @if (album.releaseYear) {
+                    <p class="text-sm text-gray-600">Ano: {{ album.releaseYear }}</p>
+                  }
+                  @if (album.recordLabel) {
+                    <p class="text-sm text-gray-600 truncate" [title]="album.recordLabel">Gravadora: {{ album.recordLabel }}</p>
+                  }
+                  @if (album.trackCount) {
+                    <p class="text-sm text-gray-500">{{ album.trackCount }} {{ album.trackCount === 1 ? 'faixa' : 'faixas' }}</p>
+                  }
+                </div>
+
+                <!-- Botões de ação -->
+                <div class="mt-4 flex gap-2">
+                  <button
+                    (click)="viewAlbum(album.id)"
+                    class="flex-1 px-3 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition duration-150 flex items-center justify-center gap-1"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    Ver
+                  </button>
+                  <button
+                    (click)="editAlbum(album.id)"
+                    class="flex-1 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition duration-150 flex items-center justify-center gap-1"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Editar
+                  </button>
+                  <button
+                    (click)="deleteAlbum(album.id)"
+                    class="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition duration-150 flex items-center justify-center gap-1"
+                    title="Excluir álbum"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Paginação -->
+        @if (!searchTerm) {
+          <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <!-- Informações de página -->
+            <div class="text-sm text-gray-700">
+              Mostrando <span class="font-medium">{{ (currentPage * pageSize) + 1 }}</span>
+              até <span class="font-medium">{{ Math.min((currentPage + 1) * pageSize, totalElements) }}</span>
+              de <span class="font-medium">{{ totalElements }}</span> álbuns
+            </div>
+
+            <!-- Controles de paginação -->
+            <div class="flex items-center gap-2">
+              <!-- Botão Anterior -->
+              <button
+                (click)="previousPage()"
+                [disabled]="currentPage === 0"
+                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 flex items-center gap-1"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <span class="hidden sm:inline">Anterior</span>
+              </button>
+
+              <!-- Números das páginas -->
+              <div class="flex gap-1">
+                @for (page of pages; track page) {
+                  @if (page === -1) {
+                    <span class="px-3 py-2 text-sm text-gray-500">...</span>
+                  } @else {
+                    <button
+                      (click)="goToPage(page)"
+                      [class]="page === currentPage
+                        ? 'px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg'
+                        : 'px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150'"
+                    >
+                      {{ page + 1 }}
+                    </button>
+                  }
+                }
+              </div>
+
+              <!-- Botão Próxima -->
+              <button
+                (click)="nextPage()"
+                [disabled]="currentPage >= totalPages - 1"
+                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 flex items-center gap-1"
+              >
+                <span class="hidden sm:inline">Próxima</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Seletor de itens por página -->
+            <div class="flex items-center gap-2">
+              <label for="pageSize" class="text-sm text-gray-700">Por página:</label>
+              <select
+                id="pageSize"
+                [value]="pageSize"
+                (change)="changePageSize($event)"
+                class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="20">20</option>
+                <option [value]="50">50</option>
+              </select>
+            </div>
+          </div>
+        }
+      }
+    }
   </main>
 </div>
+
+<!-- Modal de Confirmação de Exclusão -->
+@if (isOpenDeleteModal) {
+  <app-delete-confirmation-modal
+    [title]="'Excluir álbum ' + albumToDeleteTitle"
+    message="Tem certeza que deseja excluir este álbum? Esta ação não pode ser desfeita."
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteModal()">
+  </app-delete-confirmation-modal>
+}
