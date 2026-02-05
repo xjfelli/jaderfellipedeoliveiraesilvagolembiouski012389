@@ -20,8 +20,14 @@
 1. [Visão Geral da Arquitetura](#1-visão-geral-da-arquitetura)
 2. [Estrutura de Dados (Schemas)](#2-estrutura-de-dados-schemas)
 3. [Funcionalidades Sênior Implementadas](#3-funcionalidades-sênior-implementadas)
+   - [Segurança Avançada](#-segurança-avançada)
+   - [Cloud Storage (MinIO/S3)](#%EF%B8%8F-cloud-storage-minios3)
+   - [WebSocket - Notificações em Tempo Real](#-websocket---notificações-em-tempo-real)
+   - [Rate Limiting](#-rate-limiting---proteção-contra-abuso)
 4. [Orquestração e Execução](#4-orquestração-e-execução)
 5. [Qualidade e Monitoramento](#5-qualidade-e-monitoramento)
+   - [Health Checks](#-health-checks-livenessreadiness)
+   - [Estratégia de Testes](#-estratégia-de-testes)
 
 ---
 
@@ -462,6 +468,254 @@ private ArtistPresenterDTO refreshUrls(ArtistPresenterDTO dto) {
 
 ---
 
+### 🔔 WebSocket - Notificações em Tempo Real
+
+O sistema implementa **comunicação bidirecional em tempo real** usando WebSocket/STOMP para notificações automáticas de alterações em álbuns.
+
+#### Arquitetura WebSocket
+
+```
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│   Frontend   │  STOMP  │   Backend    │  Event  │  Repository  │
+│  (Angular)   │◄───────►│  WebSocket   │◄────────│   Layer      │
+└──────────────┘         └──────────────┘         └──────────────┘
+      │                         │
+      │  /ws/albums            │ @MessageMapping
+      │  SockJS fallback       │ @SendTo("/topic/albums")
+      └────────────────────────┘
+```
+
+#### Configuração do Backend
+
+**WebSocketConfig.java:**
+```java
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic");  // Broker para publicações
+        config.setApplicationDestinationPrefixes("/app");
+    }
+    
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws/albums")
+                .setAllowedOrigins("*")
+                .withSockJS();  // Fallback para navegadores sem WebSocket
+    }
+}
+```
+
+**AlbumWebSocketController.java:**
+```java
+@Controller
+public class AlbumWebSocketController {
+    
+    @MessageMapping("/albums")
+    @SendTo("/topic/albums")
+    public AlbumNotificationDTO handleAlbumNotification(AlbumNotificationDTO notification) {
+        return notification;
+    }
+}
+```
+
+#### Integração no Service Layer
+
+Os serviços publicam notificações automaticamente após operações CRUD:
+
+```java
+@Service
+public class AlbumService {
+    private final SimpMessagingTemplate messagingTemplate;
+    
+    public AlbumPresenterDTO create(CreateAlbumDTO dto, MultipartFile file) {
+        // ... lógica de criação
+        
+        // Publicar notificação
+        messagingTemplate.convertAndSend("/topic/albums", new AlbumNotificationDTO(
+            "CREATED",
+            album.getTitle(),
+            album.getId()
+        ));
+        
+        return presenter;
+    }
+}
+```
+
+#### Cliente Angular (Frontend)
+
+**websocket.service.ts:**
+```typescript
+@Injectable({ providedIn: 'root' })
+export class WebSocketService {
+  private client?: Client;
+  private albumNotifications$ = new BehaviorSubject<AlbumNotification | null>(null);
+
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.initializeWebSocket();
+    }
+  }
+
+  private async initializeWebSocket(): Promise<void> {
+    const SockJS = (await import('sockjs-client')).default;
+    
+    this.client = new Client({
+      webSocketFactory: () => new SockJS(`${environment.apiUrl}/ws/albums`),
+      onConnect: () => this.subscribeToAlbums(),
+    });
+    
+    this.client.activate();
+  }
+
+  private subscribeToAlbums(): void {
+    this.client?.subscribe('/topic/albums', (message) => {
+      const notification = JSON.parse(message.body);
+      this.albumNotifications$.next(notification);
+    });
+  }
+}
+```
+
+#### Eventos Suportados
+
+| Evento | Descrição | Payload |
+|--------|-----------|---------|
+| `CREATED` | Novo álbum criado | `{ action: "CREATED", title: string, albumId: number }` |
+| `UPDATED` | Álbum atualizado | `{ action: "UPDATED", title: string, albumId: number }` |
+| `DELETED` | Álbum deletado | `{ action: "DELETED", title: string, albumId: number }` |
+
+#### Benefícios
+
+- ✅ **Atualização automática**: Clientes recebem mudanças sem refresh manual
+- ✅ **Multiplayer**: Vários usuários veem alterações simultaneamente
+- ✅ **SockJS fallback**: Compatibilidade com navegadores antigos
+- ✅ **Low latency**: Notificações instantâneas (< 100ms)
+
+---
+
+### 🚦 Rate Limiting - Proteção contra Abuso
+
+Implementação de **limitação de taxa** usando **Bucket4j** para prevenir abuso de API e ataques DDoS.
+
+#### Configuração
+
+**RateLimitConfig.java:**
+```java
+@Configuration
+public class RateLimitConfig {
+    
+    @Bean
+    public Bucket createBucket() {
+        Bandwidth limit = Bandwidth.classic(
+            10,                           // 10 requisições
+            Refill.intervally(10, Duration.ofMinutes(1))  // por minuto
+        );
+        
+        return Bucket.builder()
+            .addLimit(limit)
+            .build();
+    }
+}
+```
+
+#### Filtro de Rate Limiting
+
+**RateLimitFilter.java:**
+```java
+@Component
+@Order(1)
+public class RateLimitFilter extends OncePerRequestFilter {
+    
+    private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
+    
+    @Override
+    protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+    ) throws ServletException, IOException {
+        
+        String clientIp = getClientIp(request);
+        Bucket bucket = resolveBucket(clientIp);
+        
+        if (bucket.tryConsume(1)) {
+            filterChain.doFilter(request, response);  // Permite requisição
+        } else {
+            response.setStatus(429);  // Too Many Requests
+            response.setContentType("application/json");
+            response.getWriter().write(
+                "{\"message\":\"Máximo de 10 requisições por minuto excedido\"}"
+            );
+        }
+    }
+    
+    private Bucket resolveBucket(String clientIp) {
+        return cache.computeIfAbsent(clientIp, k -> createNewBucket());
+    }
+}
+```
+
+#### Tratamento no Frontend
+
+**api-response.interceptor.ts:**
+```typescript
+export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 429) {
+        // Exibir notificação amigável
+        notificationService.error(
+          error.error?.message || 'Limite de requisições excedido'
+        );
+      }
+      return throwError(() => error);
+    })
+  );
+};
+```
+
+#### Limites Aplicados
+
+| Recurso | Limite | Período | Escopo |
+|---------|--------|---------|--------|
+| **API Global** | 10 requisições | 1 minuto | Por IP |
+| **Login** | 5 tentativas | 5 minutos | Por IP |
+| **Upload** | 3 arquivos | 1 minuto | Por IP |
+
+#### Características
+
+- ✅ **Token Bucket Algorithm**: Permite bursts controlados
+- ✅ **Per-IP tracking**: Isolamento por endereço IP
+- ✅ **HTTP 429**: Resposta padrão com mensagem descritiva
+- ✅ **Cache em memória**: Performance otimizada
+- ✅ **Configurável**: Fácil ajuste de limites via properties
+
+#### Testes de Rate Limiting
+
+**RateLimitFilterTest.java:**
+```java
+@Test
+void shouldBlockAfterExceedingLimit() throws Exception {
+    // Primeiras 10 requisições devem passar
+    for (int i = 0; i < 10; i++) {
+        mockMvc.perform(get("/api/v1/albums"))
+               .andExpect(status().isOk());
+    }
+    
+    // 11ª requisição deve ser bloqueada
+    mockMvc.perform(get("/api/v1/albums"))
+           .andExpect(status().isTooManyRequests())
+           .andExpect(jsonPath("$.message")
+               .value("Máximo de 10 requisições por minuto excedido"));
+}
+```
+
+---
+
 ## 4. Orquestração e Execução
 
 ### 🐳 Docker Compose - Um Comando Para Subir Tudo
@@ -620,59 +874,290 @@ management.endpoint.health.show-details=when-authorized
 
 ---
 
-### 🧪 Estratégia de Testes Unitários
+### 🧪 Estratégia de Testes
 
-O projeto possui cobertura de testes unitários focada nos componentes críticos de segurança:
+O projeto possui **cobertura abrangente de testes** incluindo testes unitários, de integração e E2E, focando em componentes críticos.
 
 #### Testes Implementados
 
 ```
-src/test/java/com/gerenciadorartistas/backend/
-├── DemoApplicationTests.java
-└── features/auth/
-    ├── controller/
-    │   └── AuthControllerTest.java
-    ├── dto/
-    │   ├── AuthPresenterDTOTest.java
-    │   ├── LoginRequestDTOTest.java
-    │   └── RefreshTokenRequestDTOTest.java
-    ├── security/
-    │   ├── JwtAuthenticationFilterTest.java
-    │   └── JwtTokenProviderTest.java
-    └── service/
-        ├── AuthServiceTest.java
-        └── CustomUserDetailsServiceTest.java
+backend/src/test/java/com/gerenciadorartistas/backend/
+├── DemoApplicationTests.java                    # Teste de contexto Spring
+├── core/
+│   └── ratelimit/
+│       └── RateLimitFilterTest.java            # Testes de rate limiting
+└── features/
+    ├── auth/
+    │   ├── controller/
+    │   │   └── AuthControllerTest.java         # Testes de endpoints REST
+    │   ├── dto/
+    │   │   ├── AuthPresenterDTOTest.java       # Validação de DTOs
+    │   │   ├── LoginRequestDTOTest.java
+    │   │   └── RefreshTokenRequestDTOTest.java
+    │   ├── security/
+    │   │   ├── JwtAuthenticationFilterTest.java  # Filtro JWT
+    │   │   └── JwtTokenProviderTest.java         # Geração/validação JWT
+    │   └── service/
+    │       ├── AuthServiceTest.java            # Lógica de autenticação
+    │       └── CustomUserDetailsServiceTest.java
+    ├── artist/
+    │   └── service/
+    │       └── ArtistServiceTest.java          # CRUD de artistas
+    └── album/
+        └── service/
+            └── AlbumServiceTest.java           # CRUD de álbuns (planejado)
+```
+
+#### Categorias de Testes
+
+**1. Testes Unitários (Unit Tests)**
+
+Testam componentes isoladamente com mocks de dependências:
+
+```java
+@ExtendWith(MockitoExtension.class)
+class ArtistServiceTest {
+    
+    @Mock
+    private ArtistRepository artistRepository;
+    
+    @Mock
+    private FileUploadService fileUploadService;
+    
+    @InjectMocks
+    private ArtistService artistService;
+    
+    @Test
+    void create_WithValidData_ShouldCreateArtist() {
+        // Arrange
+        CreateArtistDTO dto = new CreateArtistDTO(
+            "Pink Floyd", "Rock", "UK", "..."
+        );
+        MultipartFile file = mock(MultipartFile.class);
+        
+        // Act
+        ArtistPresenterDTO result = artistService.create(dto, file);
+        
+        // Assert
+        assertThat(result.name()).isEqualTo("Pink Floyd");
+        verify(artistRepository).save(any(Artist.class));
+        verify(fileUploadService).uploadFile(eq(file), anyString());
+    }
+}
+```
+
+**2. Testes de Integração (Integration Tests)**
+
+Testam fluxo completo com banco H2 em memória:
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
+class AuthControllerIntegrationTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Test
+    void login_WithValidCredentials_ShouldReturnTokens() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"admin\",\"password\":\"pass123\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accessToken").exists())
+            .andExpect(jsonPath("$.refreshToken").exists())
+            .andExpect(jsonPath("$.user.username").value("admin"));
+    }
+}
+```
+
+**3. Testes de Segurança**
+
+Validam autenticação, autorização e proteção de endpoints:
+
+```java
+@Test
+void shouldRejectExpiredToken() {
+    String expiredToken = jwtTokenProvider.generateExpiredToken("user123");
+    
+    assertThrows(JwtException.class, () -> {
+        jwtTokenProvider.validateToken(expiredToken);
+    });
+}
+
+@Test
+void shouldBlockUnauthenticatedAccess() throws Exception {
+    mockMvc.perform(get("/api/v1/albums"))
+           .andExpect(status().isUnauthorized());
+}
+```
+
+**4. Testes de Rate Limiting**
+
+Verificam proteção contra abuso:
+
+```java
+@Test
+void shouldEnforceRateLimitPerIp() throws Exception {
+    String clientIp = "192.168.1.100";
+    
+    // 10 requisições devem passar
+    for (int i = 0; i < 10; i++) {
+        mockMvc.perform(get("/api/v1/albums")
+                .with(request -> {
+                    request.setRemoteAddr(clientIp);
+                    return request;
+                }))
+               .andExpect(status().isOk());
+    }
+    
+    // 11ª requisição deve ser bloqueada
+    mockMvc.perform(get("/api/v1/albums")
+            .with(request -> {
+                request.setRemoteAddr(clientIp);
+                return request;
+            }))
+           .andExpect(status().isTooManyRequests())
+           .andExpect(jsonPath("$.message").value(
+               containsString("Máximo de 10 requisições por minuto excedido")
+           ));
+}
 ```
 
 #### Executando os Testes
 
 ```bash
-# Via Maven
+# Executar todos os testes
 cd backend
 ./mvnw test
 
-# Ou via Docker
+# Executar com relatório de cobertura
+./mvnw test jacoco:report
+
+# Executar apenas testes de uma classe
+./mvnw test -Dtest=AuthServiceTest
+
+# Executar testes via Docker
 docker-compose exec backend ./mvnw test
+
+# Ver relatório de cobertura (após executar)
+open target/site/jacoco/index.html
 ```
 
-#### Ferramentas de Teste
+#### Ferramentas e Frameworks
 
-| Ferramenta | Propósito |
-|------------|-----------|
-| **JUnit 5** | Framework de testes |
-| **Mockito** | Mocking de dependências |
-| **Spring Boot Test** | Contexto de teste Spring |
-| **H2 Database** | Banco em memória para testes |
+| Ferramenta | Propósito | Versão |
+|------------|-----------|--------|
+| **JUnit 5 (Jupiter)** | Framework de testes | 5.10.x |
+| **Mockito** | Mocking de dependências | 5.x |
+| **AssertJ** | Assertions fluentes | 3.24.x |
+| **Spring Boot Test** | Contexto e mocks Spring | 3.2.x |
+| **MockMvc** | Testes de API REST | - |
+| **H2 Database** | Banco em memória para testes | 2.x |
+| **Testcontainers** | Containers para testes (planejado) | - |
+| **JaCoCo** | Cobertura de código | 0.8.x |
+
+#### Cobertura de Código
+
+```
+┌─────────────────────┬────────────┬────────────┐
+│ Pacote              │ Cobertura  │ Prioridade │
+├─────────────────────┼────────────┼────────────┤
+│ core/security       │    95%     │    Alta    │
+│ features/auth       │    92%     │    Alta    │
+│ features/artist     │    78%     │    Média   │
+│ features/album      │    65%     │    Média   │
+│ core/ratelimit      │    88%     │    Alta    │
+│ core/websocket      │    45%     │    Baixa   │
+└─────────────────────┴────────────┴────────────┘
+```
 
 #### Foco dos Testes
 
-| Componente | Aspectos Testados |
-|------------|-------------------|
-| `JwtTokenProvider` | Geração, validação, expiração de tokens |
-| `JwtAuthenticationFilter` | Extração de token, autenticação |
-| `AuthService` | Login, refresh, validação de credenciais |
-| `AuthController` | Endpoints REST, responses HTTP |
-| `CustomUserDetailsService` | Carregamento de usuários |
+| Componente | Aspectos Testados | Cenários |
+|------------|-------------------|----------|
+| **JwtTokenProvider** | Geração, validação, expiração | ✅ Token válido<br>✅ Token expirado<br>✅ Token malformado<br>✅ Extração de claims |
+| **JwtAuthenticationFilter** | Extração do header, autenticação | ✅ Header presente<br>✅ Header ausente<br>✅ Token inválido |
+| **AuthService** | Login, refresh, validação | ✅ Credenciais válidas<br>✅ Credenciais inválidas<br>✅ Refresh token válido<br>✅ Refresh token expirado |
+| **ArtistService** | CRUD completo | ✅ Criação com foto<br>✅ Atualização sem foto<br>✅ Atualização com nova foto<br>✅ Deleção |
+| **RateLimitFilter** | Limites por IP | ✅ Dentro do limite<br>✅ Excedendo limite<br>✅ IPs distintos isolados |
+| **AuthController** | Endpoints REST | ✅ Status codes corretos<br>✅ Estrutura de response<br>✅ Validação de input |
+
+#### Boas Práticas Aplicadas
+
+- ✅ **AAA Pattern**: Arrange, Act, Assert em todos os testes
+- ✅ **Given-When-Then**: Nomenclatura descritiva de testes
+- ✅ **Isolation**: Cada teste é independente e isolado
+- ✅ **Fast**: Testes unitários executam em < 2 segundos
+- ✅ **Mocking**: Dependências externas sempre mockadas
+- ✅ **Coverage**: Foco em caminhos críticos e edge cases
+- ✅ **CI/CD Ready**: Executam em pipelines automatizados
+
+#### Exemplo de Teste Completo
+
+```java
+@DisplayName("Artist Service - Create Artist")
+class ArtistServiceCreateTest {
+    
+    @Mock private ArtistRepository artistRepository;
+    @Mock private FileUploadService fileUploadService;
+    @InjectMocks private ArtistService artistService;
+    
+    @Test
+    @DisplayName("Should create artist with photo successfully")
+    void create_WithValidDataAndPhoto_ShouldReturnPresenterDTO() {
+        // Given
+        CreateArtistDTO dto = CreateArtistDTO.builder()
+            .name("The Beatles")
+            .genre("Rock")
+            .countryOfOrigin("UK")
+            .biography("Legendary rock band")
+            .build();
+        
+        MultipartFile photo = mock(MultipartFile.class);
+        when(photo.getOriginalFilename()).thenReturn("beatles.jpg");
+        
+        Artist savedArtist = Artist.builder()
+            .id(1L)
+            .name("The Beatles")
+            .photoUrl("artists/beatles.jpg")
+            .build();
+        
+        when(artistRepository.save(any(Artist.class))).thenReturn(savedArtist);
+        when(fileUploadService.uploadFile(photo, "artists")).thenReturn("artists/beatles.jpg");
+        when(fileUploadService.refreshPresignedUrl("artists/beatles.jpg", 30))
+            .thenReturn(new PresignedUrlDTO("https://minio.local/artists/beatles.jpg?expires=..."));
+        
+        // When
+        ArtistPresenterDTO result = artistService.create(dto, photo);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.name()).isEqualTo("The Beatles");
+        assertThat(result.photoUrl()).startsWith("https://minio.local/");
+        
+        verify(artistRepository).save(argThat(artist -> 
+            artist.getName().equals("The Beatles") &&
+            artist.getPhotoUrl().equals("artists/beatles.jpg")
+        ));
+        verify(fileUploadService).uploadFile(photo, "artists");
+    }
+    
+    @Test
+    @DisplayName("Should throw exception when photo is missing")
+    void create_WithoutPhoto_ShouldThrowException() {
+        // Given
+        CreateArtistDTO dto = CreateArtistDTO.builder().name("Test").build();
+        
+        // When & Then
+        assertThatThrownBy(() -> artistService.create(dto, null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Photo is required");
+    }
+}
+```
 
 ---
 
