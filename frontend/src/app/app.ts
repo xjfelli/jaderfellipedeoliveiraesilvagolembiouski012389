@@ -4,10 +4,11 @@ import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './core/auth/services/auth.service';
 import { WebSocketService } from './core/websocket.service';
+import { NotificationComponent } from './core/notification/notification.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, CommonModule, NotificationComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
