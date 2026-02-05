@@ -1,0 +1,245 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Conteúdo Principal -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Loading -->
+    @if (loading) {
+      <div class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    }
+
+    <!-- Mensagem de erro -->
+    @if (error) {
+      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        {{ error }}
+        <button
+          (click)="goBack()"
+          class="mt-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+        >
+          Voltar para a lista
+        </button>
+      </div>
+    }
+
+    <!-- Conteúdo do artista -->
+    @if (!loading && artist) {
+      <div class="space-y-6">
+        <!-- Card de informações do artista -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <!-- Cabeçalho com gradiente -->
+          <div class="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-8">
+            <div class="flex items-center gap-6">
+              <!-- Foto ou ícone do artista -->
+              <div class="flex-shrink-0">
+                @if (artist.photoUrl) {
+                  <img
+                    [src]="artist.photoUrl"
+                    [alt]="artist.name"
+                    class="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover"
+                  />
+                } @else {
+                  <div class="w-24 h-24 rounded-full border-4 border-white shadow-lg bg-white flex items-center justify-center">
+                    <svg class="w-12 h-12 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                  </div>
+                }
+              </div>
+
+              <!-- Nome e gênero -->
+              <div class="flex-1">
+                <h2 class="text-3xl font-bold text-white">{{ artist.name }}</h2>
+                @if (artist.musicalGenre) {
+                  <p class="text-purple-100 mt-2 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                    {{ artist.musicalGenre }}
+                  </p>
+                }
+              </div>
+
+              <!-- Botões de ação -->
+              <div class="flex gap-2">
+                <button
+                  (click)="editArtist()"
+                  class="px-4 py-2 text-sm font-medium text-purple-600 bg-white rounded-lg hover:bg-gray-50 transition duration-150 flex items-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                  Editar
+                </button>
+                <button
+                  (click)="deleteArtist()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-150 flex items-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                  Deletar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informações detalhadas -->
+          <div class="px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- País de origem -->
+            @if (artist.countryOfOrigin) {
+              <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-1">País de Origem</h3>
+                <p class="text-base text-gray-900">{{ artist.countryOfOrigin }}</p>
+              </div>
+            }
+
+            <!-- Número de álbuns -->
+            <div>
+              <h3 class="text-sm font-medium text-gray-500 mb-1">Álbuns</h3>
+              <p class="text-base text-gray-900">{{ (artist.albums?.length || 0) }} {{ (artist.albums?.length === 1) ? 'álbum' : 'álbuns' }}</p>
+            </div>
+
+            <!-- Biografia (ocupa toda a largura se existir) -->
+            @if (artist.biography) {
+              <div class="md:col-span-2">
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Biografia</h3>
+                <p class="text-base text-gray-900 whitespace-pre-wrap">{{ artist.biography }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Seção de álbuns -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Álbuns</h3>
+            <button
+              type="button"
+              (click)="openAddAlbumModal(); $event.stopPropagation()"
+              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-700 hover:to-pink-700 transition duration-150 flex items-center gap-2 cursor-pointer relative z-10"
+              style="pointer-events: auto;"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Adicionar Álbum
+            </button>
+          </div>
+
+          <div class="p-6">
+            @if (artist.albums && artist.albums.length > 0) {
+              <!-- Grid de álbuns -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                @for (album of artist.albums; track album.id) {
+                  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition duration-150">
+                    <!-- Capa do álbum -->
+                    @if (album.coverUrl) {
+                      <img
+                        [src]="album.coverUrl"
+                        [alt]="album.title"
+                        class="w-full h-48 object-cover"
+                      />
+                    } @else {
+                      <div class="w-full h-48 bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                        <svg class="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                        </svg>
+                      </div>
+                    }
+
+                    <!-- Informações do álbum -->
+                    <div class="p-4">
+                      <h4 class="font-semibold text-gray-900 truncate" [title]="album.title">
+                        {{ album.title }}
+                      </h4>
+                      @if (album.releaseYear) {
+                        <p class="text-sm text-gray-500 mt-1">{{ album.releaseYear }}</p>
+                      }
+                      @if (album.recordLabel) {
+                        <p class="text-xs text-gray-400 mt-1 truncate" [title]="album.recordLabel">
+                          {{ album.recordLabel }}
+                        </p>
+                      }
+                      @if (album.trackCount) {
+                        <p class="text-xs text-gray-500 mt-2">
+                          {{ album.trackCount }} {{ album.trackCount === 1 ? 'faixa' : 'faixas' }}
+                        </p>
+                      }
+
+                      <!-- Botões de ação do álbum -->
+                      <div class="mt-4 flex gap-2">
+                        <button
+                          (click)="openEditAlbumModal(album)"
+                          class="flex-1 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition duration-150 flex items-center justify-center gap-1"
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                          </svg>
+                          Editar
+                        </button>
+                        <button
+                          (click)="deleteAlbum(album)"
+                          class="flex-1 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition duration-150 flex items-center justify-center gap-1"
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                          Deletar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <!-- Mensagem quando não há álbuns -->
+              <div class="text-center py-12">
+                <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-gray-900">Nenhum álbum encontrado</h3>
+                <p class="mt-2 text-sm text-gray-500">
+                  Este artista ainda não possui álbuns cadastrados.
+                </p>
+                <button
+                  (click)="openAddAlbumModal()"
+                  class="mt-4 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-700 hover:to-pink-700 transition duration-150"
+                >
+                  Adicionar Primeiro Álbum
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Botão Voltar -->
+      <div class="mt-6">
+        <button
+          (click)="goBack()"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 flex items-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Voltar para a lista
+        </button>
+      </div>
+    }
+  </main>
+
+  <!-- DEBUG INFO -->
+  <div class="fixed bottom-4 right-4 bg-blue-500 text-white p-2 rounded text-xs z-[200]">
+    Modal: {{ showAlbumModal }} | Artist ID: {{ artist?.id || 'N/A' }}
+  </div>
+
+  <!-- Modal de Álbum -->
+  @if (showAlbumModal && artist) {
+    <app-album-form
+      [artistId]="artist.id"
+      [album]="selectedAlbum"
+      (close)="closeAlbumModal()"
+      (saved)="onAlbumSaved($event)"
+    ></app-album-form>
+  }
+</div>
