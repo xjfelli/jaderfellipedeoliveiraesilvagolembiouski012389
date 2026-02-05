@@ -4,8 +4,8 @@ import { authGuard, loginGuard } from './core/auth/guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/artists',
-    pathMatch: 'full',
+    redirectTo: '/login',
+    pathMatch: 'full'
   },
   {
     path: 'login',
@@ -23,6 +23,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/artists/artists.component').then((m) => m.ArtistsComponent),
     canActivate: [authGuard],
+    data: { prerender: false }
   },
   {
     path: 'artists/new',
@@ -31,6 +32,7 @@ export const routes: Routes = [
         (m) => m.ArtistEditComponent,
       ),
     canActivate: [authGuard],
+    data: { prerender: false }
   },
   {
     path: 'artists/:id',
@@ -39,6 +41,7 @@ export const routes: Routes = [
         (m) => m.ArtistDetailComponent,
       ),
     canActivate: [authGuard],
+    data: { prerender: false }
   },
   {
     path: 'artists/:id/edit',
@@ -47,12 +50,14 @@ export const routes: Routes = [
         (m) => m.ArtistEditComponent,
       ),
     canActivate: [authGuard],
+    data: { prerender: false }
   },
   {
     path: 'albums',
     loadComponent: () =>
       import('./features/albums/albums.component').then((m) => m.AlbumsComponent),
     canActivate: [authGuard],
+    data: { prerender: false }
   },
   {
     path: 'albums/new',
@@ -61,6 +66,7 @@ export const routes: Routes = [
         (m) => m.AlbumEditComponent,
       ),
     canActivate: [authGuard],
+    data: { prerender: false }
   },
   {
     path: 'albums/:id/edit',
@@ -69,9 +75,10 @@ export const routes: Routes = [
         (m) => m.AlbumEditComponent,
       ),
     canActivate: [authGuard],
+    data: { prerender: false }
   },
   {
     path: '**',
-    redirectTo: '/artists',
+    redirectTo: '/login',
   },
 ];
