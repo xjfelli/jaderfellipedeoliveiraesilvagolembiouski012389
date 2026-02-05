@@ -114,10 +114,11 @@ public class AlbumController {
     )
     public ResponseEntity<AlbumPresenterDTO> update(
         @PathVariable Long id,
-        @Valid @RequestBody AlbumDTO albumDTO
+        @Valid @RequestPart("album") AlbumDTO albumDTO,
+        @RequestPart(value = "file", required = false) MultipartFile file
     ) {
         try {
-            AlbumPresenterDTO updated = albumService.update(id, albumDTO);
+            AlbumPresenterDTO updated = albumService.update(id, albumDTO, file);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
