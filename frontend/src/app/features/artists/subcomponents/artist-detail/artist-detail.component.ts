@@ -53,7 +53,6 @@ export class ArtistDetailComponent implements OnInit {
           this.artist = artist;
         },
         error: (err) => {
-          console.error('Erro ao carregar artista:', err);
           this.error = `Erro ao carregar artista: ${err.message || 'Não foi possível carregar os dados do artista.'}`;
         }
       });
@@ -74,7 +73,6 @@ export class ArtistDetailComponent implements OnInit {
           this.router.navigate(['/artists']);
         },
         error: (err) => {
-          console.error('Erro ao deletar artista:', err);
           alert('Não foi possível deletar o artista. Tente novamente.');
         }
       });
@@ -90,12 +88,8 @@ export class ArtistDetailComponent implements OnInit {
   }
 
   openAddAlbumModal(): void {
-    console.log('🔵 openAddAlbumModal chamado');
-    console.log('🔵 artist:', this.artist);
-    console.log('🔵 artist.id:', this.artist?.id);
     this.selectedAlbum = undefined;
     this.showAlbumModal = true;
-    console.log('🔵 showAlbumModal:', this.showAlbumModal);
     // Forçar detecção de mudanças
     this.cdr.detectChanges();
   }
@@ -129,7 +123,6 @@ export class ArtistDetailComponent implements OnInit {
           }
         },
         error: (err) => {
-          console.error('Erro ao deletar álbum:', err);
           alert('Não foi possível deletar o álbum. Tente novamente.');
         }
       });

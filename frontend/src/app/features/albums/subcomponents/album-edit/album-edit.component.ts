@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { AlbumsService } from '../../albums.service';
 import { ArtistsService } from '../../../artists/artists.service';
@@ -34,6 +35,7 @@ export class AlbumEditComponent implements OnInit {
   loadingArtists = false;
   albumId: number | null = null;
   album: Album | null = null;
+  String = String; // Expõe a função String para o template
 
   constructor() {
     this.albumForm = this.fb.group({
@@ -54,9 +56,14 @@ export class AlbumEditComponent implements OnInit {
       this.isEditMode = true;
       this.albumId = parseInt(id, 10);
       this.loadAlbum();
+      // Em modo de edição, não precisa carregar lista de artistas
+      // e remove a validação do campo artistId
+      this.albumForm.get('artistId')?.clearValidators();
+      this.albumForm.get('artistId')?.updateValueAndValidity();
+    } else {
+      // Apenas em modo de criação carrega lista de artistas
+      this.loadArtists();
     }
-
-    this.loadArtists();
   }
 
   loadAlbum(): void {
@@ -66,13 +73,16 @@ export class AlbumEditComponent implements OnInit {
     this.albumsService.getAlbumById(this.albumId).subscribe({
       next: (album) => {
         this.album = album;
+        
+        const artistId = album.artists && album.artists.length > 0 ? String(album.artists[0].id) : '';
+        
         this.albumForm.patchValue({
           title: album.title,
           releaseYear: album.releaseYear,
           recordLabel: album.recordLabel,
           trackCount: album.trackCount,
           description: album.description,
-          artistId: album.artists && album.artists.length > 0 ? album.artists[0].id : ''
+          artistId: artistId
         });
 
         if (album.coverUrl) {
@@ -82,7 +92,6 @@ export class AlbumEditComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Erro ao carregar álbum:', err);
         this.error = 'Não foi possível carregar o álbum.';
         this.loading = false;
         this.cdr.detectChanges();
@@ -106,7 +115,6 @@ export class AlbumEditComponent implements OnInit {
           this.artists = artists;
         },
         error: (err) => {
-          console.error('Erro ao carregar artistas:', err);
           this.error = 'Não foi possível carregar a lista de artistas.';
         }
       });
@@ -148,12 +156,15 @@ export class AlbumEditComponent implements OnInit {
     }
 
     const formValues = this.albumForm.value;
-    const selectedArtistId = formValues.artistId;
-
-    if (!selectedArtistId) {
-      this.error = 'Selecione um artista.';
-      this.cdr.detectChanges();
-      return;
+    
+    // Em modo de criação, valida se artista foi selecionado
+    if (!this.isEditMode) {
+      const selectedArtistId = formValues.artistId;
+      if (!selectedArtistId) {
+        this.error = 'Selecione um artista.';
+        this.cdr.detectChanges();
+        return;
+      }
     }
 
     this.saving = true;
@@ -168,9 +179,16 @@ export class AlbumEditComponent implements OnInit {
       description: formValues.description || undefined
     };
 
-    const request = this.isEditMode && this.albumId
-      ? this.albumsService.updateAlbum(this.albumId, albumData)
-      : this.albumsService.create(albumData, selectedArtistId, this.selectedFile!);
+    let request: Observable<any>;
+
+    if (this.isEditMode && this.albumId) {
+      // Modo de edição: apenas atualiza os dados do álbum (sem alterar artista)
+      request = this.albumsService.updateAlbum(this.albumId, albumData, this.selectedFile || undefined);
+    } else {
+      // Modo de criação: cria álbum e associa ao artista
+      const selectedArtistId = formValues.artistId;
+      request = this.albumsService.create(albumData, selectedArtistId, this.selectedFile!);
+    }
 
     request
       .pipe(
@@ -184,7 +202,6 @@ export class AlbumEditComponent implements OnInit {
           this.router.navigate(['/albums']);
         },
         error: (err) => {
-          console.error('Erro ao salvar álbum:', err);
           this.error = err.error?.message || 'Não foi possível salvar o álbum. Tente novamente.';
         }
       });

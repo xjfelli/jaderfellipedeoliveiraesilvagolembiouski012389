@@ -209,7 +209,7 @@ class ArtistServiceTest {
         when(fileUploadService.refreshPresignedUrl(anyString(), anyInt()))
             .thenReturn(UploadResult.of("file.jpg", "file-path", "presigned-url", 1000L, "image/jpeg", 30));
 
-        ArtistPresenterDTO result = artistService.update(1L, artistDTO);
+        ArtistPresenterDTO result = artistService.update(1L, artistDTO, null);
 
         assertNotNull(result);
         verify(artistRepository).save(artist);
@@ -219,7 +219,7 @@ class ArtistServiceTest {
     void update_WhenArtistNotExists_ShouldThrowException() {
         when(artistRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> artistService.update(1L, artistDTO));
+        assertThrows(RuntimeException.class, () -> artistService.update(1L, artistDTO, null));
     }
 
     @Test

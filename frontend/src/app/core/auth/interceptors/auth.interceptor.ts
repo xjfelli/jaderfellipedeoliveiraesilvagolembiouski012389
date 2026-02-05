@@ -39,8 +39,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // Se receber erro 401 (não autorizado) ou 403 (proibido/token expirado), tenta renovar o token
       const isAuthError = error.status === 401 || error.status === 403;
       const isNotRefreshRequest = !req.url.includes('/auth/refresh');
+      const hasRefreshToken = authService.getRefreshToken();
 
-      if (isAuthError && isNotRefreshRequest) {
+      if (isAuthError && isNotRefreshRequest && hasRefreshToken) {
         // Se já está fazendo refresh, aguarda terminar e usa o novo token
         if (isRefreshing) {
           return refreshTokenSubject.pipe(
@@ -83,6 +84,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return throwError(() => refreshError);
           }),
         );
+      }
+
+      // Se é erro de auth mas não tem refresh token, faz logout direto
+      if (isAuthError && !hasRefreshToken) {
+        authService.logout();
       }
 
       return throwError(() => error);

@@ -73,7 +73,6 @@ export class ArtistEditComponent implements OnInit {
           }
         },
         error: (err) => {
-          console.error('Erro ao carregar artista:', err);
           this.error = `Erro: ${err.message || 'Não foi possível carregar os dados do artista.'}`;
         }
       });
@@ -140,7 +139,6 @@ export class ArtistEditComponent implements OnInit {
         this.router.navigate(['/artists', artist.id]);
       },
       error: (err) => {
-        console.error('Erro ao salvar artista:', err);
         this.error = err.error?.message || 'Não foi possível salvar o artista. Tente novamente.';
         this.saving = false;
       }

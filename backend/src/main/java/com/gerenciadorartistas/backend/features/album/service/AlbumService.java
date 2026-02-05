@@ -162,14 +162,44 @@ public class AlbumService {
         return refreshUrls(albumMapper.toPresenterDTO(album, false));
     }
 
-    public AlbumPresenterDTO update(Long id, AlbumDTO albumDTO) {
+    public AlbumPresenterDTO update(Long id, AlbumDTO albumDTO, MultipartFile file) {
         Album album = albumRepository
             .findById(id)
             .orElseThrow(() ->
                 new RuntimeException("Álbum não encontrado com id: " + id)
             );
 
-        album = albumRepository.save(albumMapper.toEntity(albumDTO));
+        // Atualiza os dados básicos do álbum
+        album.setTitle(albumDTO.getTitle());
+        album.setReleaseYear(albumDTO.getReleaseYear());
+        album.setRecordLabel(albumDTO.getRecordLabel());
+        album.setTrackCount(albumDTO.getTrackCount());
+        album.setDescription(albumDTO.getDescription());
+
+        // Se foi enviado um novo arquivo de capa, faz o upload
+        if (file != null && !file.isEmpty()) {
+            String storageId = album.getStorageId();
+            if (storageId == null) {
+                storageId = UUID.randomUUID().toString();
+                album.setStorageId(storageId);
+            }
+
+            UploadResult uploadResult = fileUploadService.uploadFile(
+                file,
+                "albums/" + storageId
+            );
+
+            if (uploadResult == null) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Erro ao fazer upload da capa do álbum"
+                );
+            }
+
+            album.setCoverUrl(uploadResult.filePath());
+        }
+
+        album = albumRepository.save(album);
         
         // Enviar notificação WebSocket de atualização
         AlbumNotificationDTO notification = new AlbumNotificationDTO(

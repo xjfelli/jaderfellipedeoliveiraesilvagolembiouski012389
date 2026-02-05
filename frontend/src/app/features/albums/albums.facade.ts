@@ -32,7 +32,6 @@ export class AlbumsFacade {
     if (isPlatformBrowser(this.platformId)) {
       this.webSocketService.getAlbumNotifications().subscribe(notification => {
         if (notification) {
-          console.log(`📢 Álbum ${notification.action}: ${notification.title}`);
           // Recarregar a lista de álbuns quando receber notificação
           this.loadAlbums();
         }
@@ -108,7 +107,6 @@ export class AlbumsFacade {
           this.loading.set(false);
         },
         error: (error) => {
-          console.error('Erro ao carregar álbuns:', error);
           this.loading.set(false);
         },
       });
@@ -127,7 +125,6 @@ export class AlbumsFacade {
           this.loading.set(false);
         },
         error: (error) => {
-          console.error('Erro ao carregar álbuns:', error);
           this.loading.set(false);
         },
       });
@@ -169,7 +166,6 @@ export class AlbumsFacade {
         this.loadAlbums();
       },
       error: (error) => {
-        console.error('Erro ao excluir álbum:', error);
         alert('Erro ao excluir álbum. Tente novamente.');
         this.loading.set(false);
       },

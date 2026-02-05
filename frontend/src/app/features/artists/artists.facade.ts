@@ -103,7 +103,6 @@ export class ArtistsFacade {
           this.loading.set(false);
         },
         error: (error) => {
-          console.error('Erro ao carregar artistas:', error);
           this.loading.set(false);
         },
       });
@@ -122,7 +121,6 @@ export class ArtistsFacade {
           this.loading.set(false);
         },
         error: (error) => {
-          console.error('Erro ao carregar artistas:', error);
           this.loading.set(false);
         },
       });
@@ -152,7 +150,6 @@ export class ArtistsFacade {
         this.loadArtists();
       },
       error: (error) => {
-        console.error('Erro ao excluir artista:', error);
         alert('Erro ao excluir artista. Tente novamente.');
         this.loading.set(false);
       },

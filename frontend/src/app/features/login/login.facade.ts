@@ -141,8 +141,6 @@ export class LoginFacade {
 
     const errorMessage = this.parseErrorMessage(error);
     this.errorMessage.set(errorMessage);
-
-    console.error('Erro no login:', error);
   }
 
   /**

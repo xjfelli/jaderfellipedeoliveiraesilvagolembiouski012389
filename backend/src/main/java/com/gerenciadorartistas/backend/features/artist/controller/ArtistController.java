@@ -111,10 +111,11 @@ public class ArtistController {
     )
     public ResponseEntity<ArtistPresenterDTO> update(
         @PathVariable Long id,
-        @Valid @RequestBody ArtistDTO artistDTO
+        @Valid @RequestPart("artist") ArtistDTO artistDTO,
+        @RequestPart(value = "file", required = false) MultipartFile file
     ) {
         try {
-            ArtistPresenterDTO updated = artistService.update(id, artistDTO);
+            ArtistPresenterDTO updated = artistService.update(id, artistDTO, file);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
