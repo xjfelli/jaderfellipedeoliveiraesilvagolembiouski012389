@@ -170,11 +170,11 @@ public class AlbumService {
             );
 
         // Atualiza os dados básicos do álbum
-        album.setTitle(albumDTO.title());
-        album.setReleaseYear(albumDTO.releaseYear());
-        album.setRecordLabel(albumDTO.recordLabel());
-        album.setTrackCount(albumDTO.trackCount());
-        album.setDescription(albumDTO.description());
+        album.setTitle(albumDTO.getTitle());
+        album.setReleaseYear(albumDTO.getReleaseYear());
+        album.setRecordLabel(albumDTO.getRecordLabel());
+        album.setTrackCount(albumDTO.getTrackCount());
+        album.setDescription(albumDTO.getDescription());
 
         // Se foi enviado um novo arquivo de capa, faz o upload
         if (file != null && !file.isEmpty()) {

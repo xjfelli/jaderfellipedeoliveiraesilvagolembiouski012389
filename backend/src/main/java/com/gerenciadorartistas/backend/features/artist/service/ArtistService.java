@@ -168,20 +168,44 @@ public class ArtistService {
         return refreshUrls(artistMapper.toDto(artist, false));
     }
 
-    public ArtistPresenterDTO update(Long id, ArtistDTO artistDTO) {
+    public ArtistPresenterDTO update(Long id, ArtistDTO artistDTO, MultipartFile file) {
         Artist artist = artistRepository
             .findById(id)
             .orElseThrow(() ->
                 new RuntimeException("Artista não encontrado com id: " + id)
             );
 
+        // Atualiza dados básicos (sem tocar na photoUrl ainda)
         artist.update(
             artistDTO.getName(),
             artistDTO.getMusicalGenre(),
             artistDTO.getBiography(),
             artistDTO.getCountryOfOrigin(),
-            artistDTO.getPhotoUrl()
+            artist.getPhotoUrl() // Mantém a foto atual
         );
+
+        // Se foi enviado um novo arquivo de foto, faz o upload
+        if (file != null && !file.isEmpty()) {
+            String storageId = artist.getStorageId();
+            if (storageId == null) {
+                storageId = UUID.randomUUID().toString();
+                artist.setStorageId(storageId);
+            }
+
+            UploadResult uploadResult = fileUploadService.uploadFile(
+                file,
+                "artists/" + storageId
+            );
+
+            if (uploadResult == null) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Erro ao fazer upload da foto do artista"
+                );
+            }
+
+            artist.setPhotoUrl(uploadResult.filePath());
+        }
 
         artist = artistRepository.save(artist);
         return refreshUrls(artistMapper.toDto(artist, false));

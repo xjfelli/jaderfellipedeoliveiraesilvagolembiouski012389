@@ -98,7 +98,8 @@ export class AlbumsService {
    * Busca um álbum por ID
    */
   getAlbumById(id: number): Observable<Album> {
-    return this.http.get<Album>(`${environment.apiUrl}${this.API}/${id}`);
+    const params = new HttpParams().set('includeArtists', 'true');
+    return this.http.get<Album>(`${environment.apiUrl}${this.API}/${id}`, { params });
   }
 
   /**
@@ -111,8 +112,18 @@ export class AlbumsService {
   /**
    * Atualiza um álbum existente
    */
-  updateAlbum(id: number, albumData: CreateAlbumDTO): Observable<Album> {
-    return this.http.put<Album>(`${environment.apiUrl}${this.API}/${id}`, albumData);
+  updateAlbum(id: number, albumData: CreateAlbumDTO, file?: File): Observable<Album> {
+    if (file) {
+      // Se há arquivo, usa FormData
+      const formData = new FormData();
+      const albumBlob = new Blob([JSON.stringify(albumData)], { type: 'application/json' });
+      formData.append('album', albumBlob);
+      formData.append('file', file, file.name);
+      return this.http.put<Album>(`${environment.apiUrl}${this.API}/${id}`, formData);
+    } else {
+      // Sem arquivo, envia apenas JSON
+      return this.http.put<Album>(`${environment.apiUrl}${this.API}/${id}`, albumData);
+    }
   }
 
   /**

@@ -139,20 +139,24 @@ describe('AlbumsService', () => {
   });
 
   describe('getAlbumById', () => {
-    it('should return a single album', () => {
+    it('should return a single album with artists included', () => {
       const mockAlbum: Album = {
         id: 1,
         title: 'Test Album',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        artists: [{ id: 1, name: 'Test Artist' }],
       };
 
       service.getAlbumById(1).subscribe((album) => {
         expect(album).toEqual(mockAlbum);
       });
 
-      const req = httpMock.expectOne('/api/v1/albums/1');
+      const req = httpMock.expectOne((request) =>
+        request.url === '/api/v1/albums/1' && request.params.has('includeArtists')
+      );
       expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('includeArtists')).toBe('true');
       req.flush(mockAlbum);
     });
   });
@@ -179,7 +183,7 @@ describe('AlbumsService', () => {
   });
 
   describe('updateAlbum', () => {
-    it('should update an album', () => {
+    it('should update an album without file', () => {
       const albumData: CreateAlbumDTO = {
         title: 'Updated Album',
         releaseYear: 2024,
@@ -199,6 +203,32 @@ describe('AlbumsService', () => {
 
       const req = httpMock.expectOne('/api/v1/albums/1');
       expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(albumData);
+      req.flush(mockAlbum);
+    });
+
+    it('should update an album with file', () => {
+      const albumData: CreateAlbumDTO = {
+        title: 'Updated Album',
+        releaseYear: 2024,
+      };
+      const file = new File([''], 'new-cover.jpg', { type: 'image/jpeg' });
+
+      const mockAlbum: Album = {
+        id: 1,
+        title: 'Updated Album',
+        releaseYear: 2024,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      service.updateAlbum(1, albumData, file).subscribe((album) => {
+        expect(album).toEqual(mockAlbum);
+      });
+
+      const req = httpMock.expectOne('/api/v1/albums/1');
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body instanceof FormData).toBe(true);
       req.flush(mockAlbum);
     });
   });
