@@ -22,7 +22,6 @@ export class ArtistsService {
   create(formData: FormData) {
     return this.http.post<Artist>(`${environment.apiUrl}${this.API}`, formData).pipe(
       first(),
-      tap((createdArtist) => console.log('Artist created:', createdArtist)),
     );
   }
 

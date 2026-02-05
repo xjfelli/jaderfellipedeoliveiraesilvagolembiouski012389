@@ -20,45 +20,28 @@ export class WebSocketService {
   private albumNotifications$ = new BehaviorSubject<AlbumNotification | null>(null);
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
-    console.log('🔌 WebSocketService: Constructor chamado');
-    console.log('🔌 Platform ID:', this.platformId);
-    console.log('🔌 Is Browser?', isPlatformBrowser(this.platformId));
-    
     if (isPlatformBrowser(this.platformId)) {
-      console.log('🔌 Iniciando conexão WebSocket...');
       this.connect();
-    } else {
-      console.log('🔌 Não é browser, WebSocket não será iniciado');
     }
   }
 
   private connect(): void {
-    console.log('🔌 Método connect() chamado');
     // Importação dinâmica do SockJS apenas no browser
     import('sockjs-client').then((SockJS) => {
-      console.log('🔌 SockJS importado com sucesso');
       this.client = new Client({
         webSocketFactory: () => new SockJS.default('http://localhost/ws'),
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
-        debug: (str) => {
-          console.log('STOMP: ' + str);
-        },
         onConnect: () => {
-          console.log('✅ WebSocket conectado!');
           this.subscribeToAlbums();
         },
-        onStompError: (frame) => {
-          console.error('❌ Erro STOMP: ' + frame.headers['message']);
-          console.error('Detalhes: ' + frame.body);
+        onStompError: (frame: any) => {
+          // Erro no WebSocket - pode ser tratado silenciosamente
         }
       });
 
-      console.log('🔌 Ativando cliente STOMP...');
       this.client.activate();
-    }).catch((err) => {
-      console.error('❌ Erro ao importar SockJS:', err);
     });
   }
 
@@ -67,7 +50,6 @@ export class WebSocketService {
 
     this.client.subscribe('/topic/albums', (message: IMessage) => {
       const notification: AlbumNotification = JSON.parse(message.body);
-      console.log(`🎵 Notificação de álbum (${notification.action}):`, notification);
       this.albumNotifications$.next(notification);
     });
   }

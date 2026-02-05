@@ -90,7 +90,6 @@ export class AlbumFormComponent implements OnInit {
           this.artists = artists;
         },
         error: (err) => {
-          console.error('Erro ao carregar artistas:', err);
           this.error = 'Não foi possível carregar a lista de artistas.';
         }
       });
@@ -172,7 +171,6 @@ export class AlbumFormComponent implements OnInit {
           this.close.emit();
         },
         error: (err) => {
-          console.error('Erro ao salvar álbum:', err);
           this.error = err.error?.message || 'Não foi possível salvar o álbum. Tente novamente.';
         }
       });

@@ -21,9 +21,6 @@ export class App {
   isLoginPage = false;
 
   constructor() {
-    console.log('🚀 App Component: Constructor chamado');
-    console.log('🚀 WebSocketService injetado:', this.webSocketService);
-    
     // Inicializa isLoginPage com a rota atual
     this.isLoginPage = this.router.url === '/login';
 

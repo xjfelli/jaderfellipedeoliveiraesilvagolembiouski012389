@@ -20,11 +20,7 @@ export class RegisterService {
    */
   register(data: RegisterData): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/usuarios`, data).pipe(
-      tap((response) => {
-        console.log('Usuário registrado com sucesso:', response.username);
-      }),
       catchError((error) => {
-        console.error('Erro ao registrar usuário:', error);
         throw error;
       }),
     );

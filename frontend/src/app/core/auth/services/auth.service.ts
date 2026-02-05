@@ -67,11 +67,9 @@ export class AuthService {
    * Realiza o login do usuário
    */
   login(credentials: LoginCredentials): Observable<AuthResponse> {
-    console.log('Iniciando login com credenciais:', credentials);
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials).pipe(
       tap((response) => this.handleAuthResponse(response)),
       catchError((error) => {
-        console.error('Erro no login:', error);
         return throwError(() => error);
       }),
     );
@@ -106,7 +104,6 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/refresh`, { refreshToken }).pipe(
       tap((response) => this.handleAuthResponse(response)),
       catchError((error) => {
-        console.error('Erro ao renovar token:', error);
         this.logout();
         return throwError(() => error);
       }),
@@ -229,7 +226,6 @@ export class AuthService {
         fullname: decoded.fullname || decoded.name,
       };
     } catch (error) {
-      console.error('Erro ao decodificar token:', error);
       return null;
     }
   }

@@ -180,8 +180,6 @@ export class RegisterFacade {
 
     const errorMessage = this.parseErrorMessage(error);
     this.errorMessage.set(errorMessage);
-
-    console.error('Erro no registro:', error);
   }
 
   private parseErrorMessage(error: any): string {
